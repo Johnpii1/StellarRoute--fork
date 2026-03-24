@@ -41,11 +41,22 @@ impl PoolAdapterTrait for ConstantProductAdapter {
     ) -> i128 {
         let (res_in, res_out) = Self::get_reserves(e.clone());
 
-        // dy = (y * dx) / (x + dx)
-        let fee_multiplier = 997;
-        let amount_with_fee = amount_in * fee_multiplier;
-        let numerator = amount_with_fee * res_out;
-        let denominator = (res_in * 1000) + amount_with_fee;
+        // dy = (y * dx * 997) / (x * 1000 + dx * 997)
+        let fee_multiplier: i128 = 997;
+        let amount_with_fee = amount_in
+            .checked_mul(fee_multiplier)
+            .unwrap_or_else(|| panic!("overflow: amount_with_fee"));
+        let numerator = amount_with_fee
+            .checked_mul(res_out)
+            .unwrap_or_else(|| panic!("overflow: numerator"));
+        let denominator = res_in
+            .checked_mul(1000)
+            .and_then(|v| v.checked_add(amount_with_fee))
+            .unwrap_or_else(|| panic!("overflow: denominator"));
+
+        if denominator == 0 {
+            panic!("division by zero: empty pool reserves");
+        }
 
         numerator / denominator
     }

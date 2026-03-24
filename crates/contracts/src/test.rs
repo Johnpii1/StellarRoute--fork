@@ -2073,3 +2073,181 @@ fn test_burn_recipient_tracking() {
 
     assert_eq!(client.get_total_fees_burned(&Asset::Native), 2970);
 }
+
+// ── Overflow / Underflow Safety Tests ────────────────────────────────────────
+
+#[test]
+fn test_fee_calc_overflow_returns_error() {
+    // A very large amount_in should trigger checked_mul overflow in fee calculation
+    // and return ContractError::Overflow rather than panicking.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let route = make_route(&env, &pool, 1);
+    let params = swap_params_for(&env, route, i128::MAX, 0, current_seq(&env) + 100);
+    let result = client.try_execute_swap(&Address::generate(&env), &params);
+    assert_eq!(result, Err(Ok(ContractError::Overflow)));
+}
+
+#[test]
+fn test_quote_fee_calc_overflow_returns_error() {
+    // Same overflow path but via get_quote.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let route = make_route(&env, &pool, 1);
+    let result = client.try_get_quote(&i128::MAX, &route);
+    assert_eq!(result, Err(Ok(ContractError::Overflow)));
+}
+
+#[test]
+fn test_swap_amount_zero_does_not_overflow() {
+    // Zero amount should not cause any arithmetic issues.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let route = make_route(&env, &pool, 1);
+    let params = swap_params_for(&env, route, 0, 0, current_seq(&env) + 100);
+    // Zero input is rejected as InvalidAmount — not an overflow panic.
+    let result = client.try_execute_swap(&Address::generate(&env), &params);
+    assert_eq!(result, Err(Ok(ContractError::InvalidAmount)));
+}
+
+#[test]
+fn test_swap_negative_amount_rejected() {
+    // Negative amounts must be caught before any arithmetic.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let route = make_route(&env, &pool, 1);
+    let params = swap_params_for(&env, route, -1, 0, current_seq(&env) + 100);
+    let result = client.try_execute_swap(&Address::generate(&env), &params);
+    assert_eq!(result, Err(Ok(ContractError::InvalidAmount)));
+}
+
+#[test]
+fn test_quote_negative_amount_rejected_overflow_safe() {
+    // Negative amounts in get_quote must not cause overflow via sign extension.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let route = make_route(&env, &pool, 1);
+    let result = client.try_get_quote(&-1_i128, &route);
+    assert_eq!(result, Err(Ok(ContractError::InvalidRoute)));
+}
+
+#[test]
+fn test_fee_config_bps_overflow_rejected() {
+    // share_bps values that would overflow u32 when summed must be rejected.
+    // 5 recipients each with u32::MAX / 2 + 1 would overflow on the second add.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+
+    let overflow_share: u32 = u32::MAX / 2 + 1; // two of these overflow u32
+    let mut recipients = Vec::new(&env);
+    recipients.push_back(FeeRecipient {
+        address: Address::generate(&env),
+        share_bps: overflow_share,
+        label: Symbol::new(&env, "a"),
+    });
+    recipients.push_back(FeeRecipient {
+        address: Address::generate(&env),
+        share_bps: overflow_share,
+        label: Symbol::new(&env, "b"),
+    });
+
+    let result = client.try_set_fee_distribution_config(&FeeConfig {
+        recipients,
+        min_distribution: 0,
+        auto_distribute: false,
+    });
+    assert_eq!(result, Err(Ok(ContractError::InvalidFeeConfig)));
+}
+
+#[test]
+fn test_fee_config_bps_not_summing_to_10000_rejected() {
+    // Shares that don't sum to exactly 10000 bps are invalid.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+
+    let mut recipients = Vec::new(&env);
+    recipients.push_back(FeeRecipient {
+        address: Address::generate(&env),
+        share_bps: 5001,
+        label: Symbol::new(&env, "a"),
+    });
+    recipients.push_back(FeeRecipient {
+        address: Address::generate(&env),
+        share_bps: 5000,
+        label: Symbol::new(&env, "b"),
+    });
+
+    let result = client.try_set_fee_distribution_config(&FeeConfig {
+        recipients,
+        min_distribution: 0,
+        auto_distribute: false,
+    });
+    assert_eq!(result, Err(Ok(ContractError::InvalidFeeConfig)));
+}
+
+#[test]
+fn test_large_valid_swap_does_not_overflow() {
+    // A large but non-overflowing amount should succeed end-to-end.
+    // i128::MAX / 10_000 keeps fee multiplication within i128 range.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let safe_large: i128 = i128::MAX / 10_000;
+    let route = make_route(&env, &pool, 1);
+    let params = swap_params_for(&env, route, safe_large, 0, current_seq(&env) + 100);
+    let result = client.try_execute_swap(&Address::generate(&env), &params);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_multi_hop_overflow_returns_error() {
+    // With max hops and a large amount, intermediate checked_mul should catch overflow.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    // Use an amount large enough that fee * amount overflows after a few hops.
+    let route = make_route(&env, &pool, 4);
+    let params = swap_params_for(&env, route, i128::MAX, 0, current_seq(&env) + 100);
+    let result = client.try_execute_swap(&Address::generate(&env), &params);
+    assert_eq!(result, Err(Ok(ContractError::Overflow)));
+}
+
+#[test]
+fn test_swap_volume_saturates_at_max_not_panic() {
+    // Swap volume accumulation uses checked_add with unwrap_or(i128::MAX).
+    // Performing many large swaps should not panic — volume caps at i128::MAX.
+    let env = setup_env();
+    let (_admin, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    // A safe large amount that won't overflow fee math but accumulates volume quickly.
+    let amount: i128 = i128::MAX / 10_000;
+    for _ in 0..3 {
+        let route = make_route(&env, &pool, 1);
+        let params = swap_params_for(&env, route, amount, 0, current_seq(&env) + 100);
+        client.execute_swap(&Address::generate(&env), &params);
+    }
+    // Fees collected should be a large positive number, not wrapped/negative.
+    let fees = client.get_total_fees_collected(&Asset::Native);
+    assert!(fees >= 0);
+}

@@ -155,7 +155,10 @@ impl StellarRoute {
         let num_recipients = config.recipients.len() as usize;
 
         for (i, rec) in config.recipients.iter().enumerate() {
-            let mut amount = (total_balance * rec.share_bps as i128) / 10000;
+            let mut amount = (total_balance
+                .checked_mul(rec.share_bps as i128)
+                .unwrap_or(i128::MAX))
+                / 10000;
 
             // Add rounding dust to treasury or last recipient
             if (found_treasury && i == treasury_idx) || (!found_treasury && i == num_recipients - 1)
@@ -164,7 +167,7 @@ impl StellarRoute {
             }
 
             if amount > 0 {
-                remaining_dust -= amount;
+                remaining_dust = remaining_dust.saturating_sub(amount);
 
                 if rec.label == symbol_short!("burn") {
                     match asset {
@@ -224,7 +227,9 @@ impl StellarRoute {
         e.storage().persistent().set(&key, &true);
         storage::extend_pool_ttl(&e, &pool);
 
-        let new_count = storage::get_pool_count(&e) + 1;
+        let new_count = storage::get_pool_count(&e)
+            .checked_add(1)
+            .unwrap_or_else(|| panic!("pool count overflow"));
         storage::set_pool_count(&e, new_count);
         storage::add_to_pool_list(&e, &pool);
 
@@ -491,7 +496,9 @@ impl StellarRoute {
         let mev_config = storage::get_mev_config(&e).ok_or(ContractError::NotInitialized)?;
 
         let current_ledger = e.ledger().sequence();
-        let expires_at = current_ledger + mev_config.commit_window_ledgers;
+        let expires_at = current_ledger
+            .checked_add(mev_config.commit_window_ledgers)
+            .unwrap_or(u32::MAX);
 
         let commitment = CommitmentData {
             sender: sender.clone(),
@@ -583,10 +590,13 @@ impl StellarRoute {
         }
 
         // Estimate CPU: base + per-hop + CCI overhead
-        let estimated_cpu = (BASE_CPU_PER_HOP * num_hops as u64) + (CCI_OVERHEAD * num_hops as u64);
+        let estimated_cpu = (BASE_CPU_PER_HOP.saturating_mul(num_hops as u64))
+            .saturating_add(CCI_OVERHEAD.saturating_mul(num_hops as u64));
 
         // Storage reads: 1 instance config + num_hops pool checks + 1 nonce
-        let storage_reads = 1 + num_hops + 1;
+        let storage_reads = 1u32
+            .saturating_add(num_hops)
+            .saturating_add(1);
 
         // Storage writes: 1 nonce update
         let storage_writes = 1;
@@ -638,40 +648,21 @@ impl StellarRoute {
         }
 
         let fee_rate = get_fee_rate(&e);
-        let fee_amount = (current_amount * fee_rate as i128) / 10000;
-        let final_output = current_amount - fee_amount;
+        let fee_amount = (current_amount
+            .checked_mul(fee_rate as i128)
+            .ok_or(ContractError::Overflow)?)
+            / 10000;
+        let final_output = current_amount
+            .checked_sub(fee_amount)
+            .ok_or(ContractError::Overflow)?;
 
         let quote = QuoteResult {
             expected_output: final_output,
             price_impact_bps: total_impact_bps,
             fee_amount,
             route: route.clone(),
-            valid_until: (e.ledger().sequence() + 120) as u64,
-        };
-
-        events::quote_generated(
-            &e,
-            amount_in,
-            quote.expected_output,
-            quote.fee_amount,
-            quote.price_impact_bps,
-            route.hops.len(),
-            quote.valid_until,
-        );
-
-        Ok(quote)
-    }
-
-    /// Interface alias for external integrators: returns the best-effort quote.
-    pub fn quote(e: Env, amount_in: i128, route: Route) -> Result<QuoteResult, ContractError> {
-        Self::get_quote(e, amount_in, route)
-    }
-
-    /// Preflight route validation used by indexers, relayers, and debuggers.
-    pub fn validate(e: Env, route: Route) -> Result<(), ContractError> {
-        Self::validate_route_internal(&e, &route)?;
-        events::route_validated(&e, route.hops.len(), route.expires_at);
-        Ok(())
+            valid_until: (e.ledger().sequence() as u64).saturating_add(120),
+        })
     }
 
     pub fn execute_swap(
@@ -745,7 +736,7 @@ impl StellarRoute {
                 let window_start = storage::get_account_swap_window_start(e, sender);
                 let swap_count = storage::get_account_swap_count(e, sender);
 
-                if swap_count > 0 && current_ledger < window_start + mev_config.rate_limit_window {
+                if swap_count > 0 && current_ledger < window_start.saturating_add(mev_config.rate_limit_window) {
                     // Still within the window
                     if swap_count >= mev_config.max_swaps_per_window {
                         events::rate_limit_hit(
@@ -759,7 +750,7 @@ impl StellarRoute {
                     storage::set_account_swap_count(
                         e,
                         sender,
-                        swap_count + 1,
+                        swap_count.saturating_add(1),
                         mev_config.rate_limit_window,
                     );
                 } else {
@@ -832,8 +823,13 @@ impl StellarRoute {
 
         // 8. Calculate fees
         let fee_rate = get_fee_rate(e);
-        let fee_amount = (current_input_amount * fee_rate as i128) / 10000;
-        let final_output = current_input_amount - fee_amount;
+        let fee_amount = (current_input_amount
+            .checked_mul(fee_rate as i128)
+            .ok_or(ContractError::Overflow)?)
+            / 10000;
+        let final_output = current_input_amount
+            .checked_sub(fee_amount)
+            .ok_or(ContractError::Overflow)?;
 
         // 9. Enhanced slippage guards
         // max_price_impact_bps check
@@ -844,7 +840,11 @@ impl StellarRoute {
         // max_execution_spread_bps check (compare actual output vs expected)
         if params.max_execution_spread_bps > 0 && params.route.estimated_output > 0 {
             let spread = if final_output < params.route.estimated_output {
-                ((params.route.estimated_output - final_output) * 10000)
+                let diff = params.route.estimated_output
+                    .checked_sub(final_output)
+                    .ok_or(ContractError::Overflow)?;
+                diff.checked_mul(10000)
+                    .ok_or(ContractError::Overflow)?
                     / params.route.estimated_output
             } else {
                 0
@@ -875,8 +875,8 @@ impl StellarRoute {
             if let Ok(Ok(post)) = post_result {
                 // Check that reserves changed in the expected direction
                 // For a swap: one reserve goes up, one goes down
-                let delta_0 = post.0 - pre.0;
-                let delta_1 = post.1 - pre.1;
+                let delta_0 = post.0.checked_sub(pre.0).unwrap_or(i128::MIN);
+                let delta_1 = post.1.checked_sub(pre.1).unwrap_or(i128::MIN);
                 // If both reserves moved in the same direction, something is wrong
                 if delta_0 > 0 && delta_1 > 0 {
                     return Err(ContractError::ReserveManipulationDetected);
@@ -895,7 +895,7 @@ impl StellarRoute {
         }
 
         // 12. Transfer output to recipient
-        let last_hop = params.route.hops.get(params.route.hops.len() - 1).unwrap();
+        let last_hop = params.route.hops.get(params.route.hops.len().saturating_sub(1) as u32).unwrap();
 
         transfer_asset(
             e,

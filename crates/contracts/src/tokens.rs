@@ -59,7 +59,7 @@ fn push_cat_entry(e: &Env, category: TokenCategory, asset: &Asset) {
     e.storage()
         .persistent()
         .extend_ttl(&key, 17280, 17280 * 365);
-    set_cat_len(e, category, idx + 1);
+    set_cat_len(e, category, idx.checked_add(1).unwrap_or_else(|| panic!("category index overflow")));
 }
 
 // ─── Authorization helper ─────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ pub fn add_token_internal(e: &Env, caller: Address, info: TokenInfo) -> Result<(
 
     st::save_token_info(e, &info);
     push_cat_entry(e, category, &asset);
-    st::set_token_count(e, st::get_token_count(e) + 1);
+    st::set_token_count(e, st::get_token_count(e).checked_add(1).unwrap_or_else(|| panic!("token count overflow")));
 
     events::token_added(e, asset, caller);
     extend_instance_ttl(e);
@@ -133,7 +133,7 @@ pub fn remove_token_internal(e: &Env, caller: Address, asset: Asset) -> Result<(
                 st::remove_token(e, &asset);
                 let count = st::get_token_count(e);
                 if count > 0 {
-                    st::set_token_count(e, count - 1);
+                    st::set_token_count(e, count.saturating_sub(1));
                 }
                 events::token_removed(e, asset, caller);
                 extend_instance_ttl(e);
@@ -147,7 +147,7 @@ pub fn remove_token_internal(e: &Env, caller: Address, asset: Asset) -> Result<(
     st::remove_token(e, &asset);
     let count = st::get_token_count(e);
     if count > 0 {
-        st::set_token_count(e, count - 1);
+        st::set_token_count(e, count.saturating_sub(1));
     }
 
     events::token_removed(e, asset, caller);
