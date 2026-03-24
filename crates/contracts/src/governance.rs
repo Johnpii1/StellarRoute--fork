@@ -228,7 +228,7 @@ pub fn propose(e: &Env, signer: Address, action: ProposalAction) -> Result<u64, 
         proposer: signer.clone(),
         approvals,
         created_at: now,
-        expires_at: now.checked_add(config.proposal_ttl).unwrap_or(u64::MAX),
+        expires_at: now.saturating_add(config.proposal_ttl),
         executed: false,
     };
     storage::save_proposal(e, &proposal);

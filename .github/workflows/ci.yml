@@ -105,7 +105,8 @@ jobs:
             ${{ runner.os }}-cargo-
       
       - name: Install sqlx-cli
-        run: cargo install sqlx-cli --version "^0.8" --no-default-features --features native-tls,postgres --locked
+        # --force: cache restores ~/.cargo/bin; without it cargo install errors if cargo-sqlx already exists
+        run: cargo install sqlx-cli --version "^0.8" --no-default-features --features native-tls,postgres --locked --force
       
       - name: Run database migrations
         run: sqlx migrate run --source crates/indexer/migrations

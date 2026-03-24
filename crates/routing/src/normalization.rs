@@ -185,7 +185,11 @@ fn parse_decimal_to_e7(value: &str) -> Result<i128> {
 
     int_value
         .checked_mul(SCALE_1E7)
-        .and_then(|v| frac_value.checked_mul(scale_factor).and_then(|f| v.checked_add(f)))
+        .and_then(|v| {
+            frac_value
+                .checked_mul(scale_factor)
+                .and_then(|f| v.checked_add(f))
+        })
         .ok_or(RoutingError::Overflow)
 }
 
@@ -274,6 +278,9 @@ mod tests {
         let elapsed = start.elapsed();
 
         assert_eq!(levels.len(), 1001);
-        assert!(elapsed.as_millis() < 200, "normalization too slow: {elapsed:?}");
+        assert!(
+            elapsed.as_millis() < 200,
+            "normalization too slow: {elapsed:?}"
+        );
     }
 }

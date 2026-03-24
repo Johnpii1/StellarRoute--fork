@@ -132,8 +132,8 @@ async fn find_best_price(
     let base_id = find_asset_id(state, base).await?;
     let quote_id = find_asset_id(state, quote).await?;
 
-        // Find best offer
-        let row = sqlx::query(
+    // Find best offer
+    let row = sqlx::query(
         r#"
                 select
                     venue_type,

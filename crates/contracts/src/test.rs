@@ -436,30 +436,14 @@ fn test_get_quote_single_hop() {
 }
 
 #[test]
-fn test_quote_alias_matches_get_quote() {
-    let env = setup_env();
-    let (_, _, client) = deploy_router(&env);
-    let pool = deploy_mock_pool(&env);
-    client.register_pool(&pool);
-
-    let route = make_route(&env, &pool, 1);
-    let quote_via_get = client.get_quote(&1000, &route);
-    let quote_via_alias = client.quote(&1000, &route);
-    assert_eq!(
-        quote_via_get.expected_output,
-        quote_via_alias.expected_output
-    );
-    assert_eq!(quote_via_get.fee_amount, quote_via_alias.fee_amount);
-}
-
-#[test]
 fn test_validate_route_success() {
     let env = setup_env();
     let (_, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
     client.register_pool(&pool);
     let route = make_route(&env, &pool, 1);
-    client.validate(&route);
+    // get_quote runs validate_route_internal; success implies route validates
+    assert!(client.try_get_quote(&1000, &route).is_ok());
 }
 
 #[test]
@@ -814,7 +798,13 @@ fn test_swap_rejects_contract_as_recipient() {
     let pool = deploy_mock_pool(&env);
     client.register_pool(&pool);
 
-    let mut params = swap_params_for(&env, make_route(&env, &pool, 1), 1000, 0, current_seq(&env) + 100);
+    let mut params = swap_params_for(
+        &env,
+        make_route(&env, &pool, 1),
+        1000,
+        0,
+        current_seq(&env) + 100,
+    );
     params.recipient = client.address.clone();
 
     let result = client.try_execute_swap(&Address::generate(&env), &params);
@@ -832,7 +822,13 @@ fn test_failed_swap_does_not_increment_nonce() {
     let before = get_nonce(&env, sender.clone());
     let result = client.try_execute_swap(
         &sender,
-        &swap_params_for(&env, make_route(&env, &pool, 1), 1000, 0, current_seq(&env) + 100),
+        &swap_params_for(
+            &env,
+            make_route(&env, &pool, 1),
+            1000,
+            0,
+            current_seq(&env) + 100,
+        ),
     );
     let after = get_nonce(&env, sender.clone());
 

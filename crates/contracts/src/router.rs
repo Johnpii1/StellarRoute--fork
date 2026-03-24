@@ -496,9 +496,7 @@ impl StellarRoute {
         let mev_config = storage::get_mev_config(&e).ok_or(ContractError::NotInitialized)?;
 
         let current_ledger = e.ledger().sequence();
-        let expires_at = current_ledger
-            .checked_add(mev_config.commit_window_ledgers)
-            .unwrap_or(u32::MAX);
+        let expires_at = current_ledger.saturating_add(mev_config.commit_window_ledgers);
 
         let commitment = CommitmentData {
             sender: sender.clone(),
@@ -594,9 +592,7 @@ impl StellarRoute {
             .saturating_add(CCI_OVERHEAD.saturating_mul(num_hops as u64));
 
         // Storage reads: 1 instance config + num_hops pool checks + 1 nonce
-        let storage_reads = 1u32
-            .saturating_add(num_hops)
-            .saturating_add(1);
+        let storage_reads = 1u32.saturating_add(num_hops).saturating_add(1);
 
         // Storage writes: 1 nonce update
         let storage_writes = 1;
@@ -760,7 +756,9 @@ impl StellarRoute {
                 let window_start = storage::get_account_swap_window_start(e, sender);
                 let swap_count = storage::get_account_swap_count(e, sender);
 
-                if swap_count > 0 && current_ledger < window_start.saturating_add(mev_config.rate_limit_window) {
+                if swap_count > 0
+                    && current_ledger < window_start.saturating_add(mev_config.rate_limit_window)
+                {
                     // Still within the window
                     if swap_count >= mev_config.max_swaps_per_window {
                         events::rate_limit_hit(
@@ -860,11 +858,12 @@ impl StellarRoute {
         // max_execution_spread_bps check (compare actual output vs expected)
         if params.max_execution_spread_bps > 0 && params.route.estimated_output > 0 {
             let spread = if final_output < params.route.estimated_output {
-                let diff = params.route.estimated_output
+                let diff = params
+                    .route
+                    .estimated_output
                     .checked_sub(final_output)
                     .ok_or(ContractError::Overflow)?;
-                diff.checked_mul(10000)
-                    .ok_or(ContractError::Overflow)?
+                diff.checked_mul(10000).ok_or(ContractError::Overflow)?
                     / params.route.estimated_output
             } else {
                 0
@@ -920,7 +919,11 @@ impl StellarRoute {
         }
 
         // 12. Transfer output to recipient
-        let last_hop = params.route.hops.get(params.route.hops.len().saturating_sub(1) as u32).unwrap();
+        let last_hop = params
+            .route
+            .hops
+            .get(params.route.hops.len().saturating_sub(1))
+            .unwrap();
 
         transfer_asset(
             e,
