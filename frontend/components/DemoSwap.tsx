@@ -138,11 +138,6 @@ export function DemoSwap() {
     setSellRaw(formatMaxAmountForInput(stubSpendableBalance, sellMaxDecimals));
   }, [isConnected, stubSpendableBalance, sellMaxDecimals]);
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 3dd66dcbab93f5d07cae58afda851a9fdc7ebb35
   const handleSwapClick = () => {
     if (parseResult.status !== "ok" || !selectedPair) {
       toast.error("Enter a valid sell amount and select a pair.");

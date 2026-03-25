@@ -222,6 +222,7 @@ impl HybridOptimizer {
 
         if scored_paths.is_empty() {
             return Err(RoutingError::NoRoute(
+                "".to_string(),
                 "no routes meet policy constraints".to_string(),
             ));
         }
@@ -259,7 +260,8 @@ impl HybridOptimizer {
             let edge = edges.iter()
                 .find(|e| e.from == hop.source_asset && e.to == hop.destination_asset)
                 .ok_or_else(|| RoutingError::NoRoute(
-                    format!("edge not found for hop {} -> {}", hop.source_asset, hop.destination_asset)
+                    hop.source_asset.clone(),
+                    hop.destination_asset.clone(),
                 ))?;
 
             // Calculate impact based on venue type
@@ -319,9 +321,10 @@ impl HybridOptimizer {
     ) -> Result<Vec<(String, OptimizerDiagnostics)>> {
         let mut results = Vec::new();
         let original_policy = self.active_policy.clone();
+        let policy_names: Vec<String> = self.policies.keys().cloned().collect();
 
-        for env_name in self.policies.keys() {
-            self.set_active_policy(env_name)?;
+        for env_name in policy_names {
+            self.set_active_policy(&env_name)?;
             let diagnostics = self.find_optimal_routes(from, to, edges, amount_in)?;
             results.push((env_name.clone(), diagnostics));
         }
@@ -368,7 +371,7 @@ mod tests {
     #[test]
     fn test_optimizer_creation() {
         let optimizer = HybridOptimizer::default();
-        assert_eq!(optimizer.active_policy(), "production");
+        assert_eq!(optimizer.active_policy().environment, "production");
         assert!(optimizer.policies.contains_key("realtime"));
         assert!(optimizer.policies.contains_key("analysis"));
     }
