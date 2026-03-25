@@ -87,7 +87,10 @@ pub async fn get_quote(
     let (price, path) = find_best_price(&state, &base_asset, &quote_asset, amount).await?;
 
     let total = amount * price;
-    let timestamp = chrono::Utc::now().timestamp();
+    // Keep timestamps in milliseconds to match API docs and frontend staleness logic.
+    let timestamp = chrono::Utc::now().timestamp_millis();
+    let ttl_seconds: u32 = 2;
+    let expires_at = timestamp + (ttl_seconds as i64 * 1000);
 
     let quote_type = match params.quote_type {
         crate::models::request::QuoteType::Sell => "sell",
@@ -103,6 +106,9 @@ pub async fn get_quote(
         quote_type: quote_type.to_string(),
         path,
         timestamp,
+        expires_at: Some(expires_at),
+        source_timestamp: None,
+        ttl_seconds: Some(ttl_seconds),
     };
 
     // Cache the response (TTL: 2 seconds for quote data)

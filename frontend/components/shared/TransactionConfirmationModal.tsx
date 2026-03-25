@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,8 +30,9 @@ interface TransactionConfirmationModalProps {
   toAmount: string;
   exchangeRate: string;
   priceImpact: string;
-  minReceived: string;
+  minReceived?: string;
   networkFee: string;
+  slippageTolerancePct?: number;
   routePath: PathStep[];
   // Actions
   onConfirm: () => void;
@@ -40,6 +41,13 @@ interface TransactionConfirmationModalProps {
   status: TransactionStatus | "review";
   errorMessage?: string;
   txHash?: string;
+}
+
+function parseMaybeNumber(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return undefined;
+  return n;
 }
 
 export function TransactionConfirmationModal({
@@ -53,6 +61,7 @@ export function TransactionConfirmationModal({
   priceImpact,
   minReceived,
   networkFee,
+  slippageTolerancePct,
   routePath,
   onConfirm,
   onCancel,
@@ -61,6 +70,20 @@ export function TransactionConfirmationModal({
   txHash,
 }: TransactionConfirmationModalProps) {
   const [countdown, setCountdown] = useState(15);
+
+  const computedMinReceived = useMemo(() => {
+    const toAmountN = parseMaybeNumber(toAmount);
+    if (toAmountN === undefined) return undefined;
+    if (slippageTolerancePct === undefined) return undefined;
+
+    const slippageFactor = 1 - slippageTolerancePct / 100;
+    if (!(slippageFactor >= 0)) return undefined;
+
+    // Keep it as a string to avoid locale formatting drift.
+    return String(toAmountN * slippageFactor);
+  }, [slippageTolerancePct, toAmount]);
+
+  const minReceivedToDisplay = computedMinReceived ?? minReceived;
 
   // Auto-refresh mock timer during review state
   useEffect(() => {
@@ -152,9 +175,17 @@ export function TransactionConfirmationModal({
                   </span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-muted-foreground">Slippage</span>
+                  <span>
+                    {slippageTolerancePct === undefined
+                      ? "—"
+                      : `${slippageTolerancePct}%`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">Minimum Received</span>
                   <span>
-                    {minReceived} {toAsset}
+                    {minReceivedToDisplay ?? "—"} {toAsset}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -178,11 +209,22 @@ export function TransactionConfirmationModal({
                   </div>
                 </div>
               </div>
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-950 dark:text-amber-100">
+                Demo mode: signing and submission are simulated — not yet on-chain.
+              </div>
             </div>
 
             <DialogFooter className="flex-col sm:flex-col gap-2">
               <Button onClick={onConfirm} className="w-full" size="lg">
                 Confirm Swap
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => handleOpenChange(false)}
+              >
+                Cancel
               </Button>
               <div className="text-center text-xs text-muted-foreground">
                 Quote refreshes in {countdown}s
@@ -207,6 +249,9 @@ export function TransactionConfirmationModal({
               <DialogDescription>
                 Please confirm the transaction in your wallet to continue.
               </DialogDescription>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Demo mode: this action is simulated — not yet on-chain.
+              </p>
             </div>
           </div>
         )}

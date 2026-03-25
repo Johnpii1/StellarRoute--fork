@@ -17,6 +17,7 @@ import { PathStep } from "@/types";
 import { TransactionStatus } from "@/types/transaction";
 
 const MOCK_WALLET = "GBSU...XYZ9";
+const DEMO_SLIPPAGE_TOLERANCE_PCT = 0.5;
 
 /** Basic sell-side amount check for demo (7 dp max, typical for XLM). */
 function parseDemoSellAmount(raw: string): { ok: true; n: number } | { ok: false; message: string } {
@@ -327,7 +328,7 @@ export function DemoSwap() {
         toAmount={quote?.total ?? "—"}
         exchangeRate={quote?.price ?? "—"}
         priceImpact="0.1%"
-        minReceived={quote?.total ?? "—"}
+        slippageTolerancePct={DEMO_SLIPPAGE_TOLERANCE_PCT}
         networkFee="0.00001"
         routePath={routeForModal}
         onConfirm={handleConfirm}
