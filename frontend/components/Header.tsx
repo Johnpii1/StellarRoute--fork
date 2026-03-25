@@ -20,6 +20,9 @@ export function Header() {
             <Link href="/history" className="text-sm font-medium hover:text-primary transition-colors">
               History
             </Link>
+            <Link href="/settings" className="text-sm font-medium hover:text-primary transition-colors">
+              Settings
+            </Link>
             <ThemeToggle />
           </nav>
         </div>

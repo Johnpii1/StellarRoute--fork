@@ -30,6 +30,8 @@ import {
   parseSellAmount,
 } from "@/lib/amount-input";
 
+import { QUOTE_AUTO_REFRESH_INTERVAL_MS } from "@/lib/quote-stale";
+
 const MOCK_WALLET = "GBSU...XYZ9";
 
 function pairKey(p: TradingPair): string {
@@ -52,6 +54,7 @@ const mockRoute: PathStep[] = [
 export function DemoSwap() {
   const { data: pairs, loading: pairsLoading, error: pairsError } = usePairs();
   const { isConnected, stubSpendableBalance } = useWallet();
+  const { settings } = useSettings();
 
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [sellRaw, setSellRaw] = useState<string>("");
@@ -68,7 +71,7 @@ export function DemoSwap() {
 
   useEffect(() => {
     if (!pairs?.length) return;
-    setSelectedKey((current) => {
+    setSelectedKey((current: string) => {
       if (current && pairs.some((p) => pairKey(p) === current)) {
         return current;
       }
@@ -100,7 +103,13 @@ export function DemoSwap() {
     data: quote,
     loading: quoteLoading,
     error: quoteError,
-  } = useQuote(quoteBase, quoteCounter, numericForQuote, "sell");
+    refresh,
+    manualRefreshCoolingDown,
+    autoRefreshEnabled,
+    setAutoRefreshEnabled,
+  } = useQuoteRefresh(quoteBase, quoteCounter, numericForQuote, "sell");
+
+  const refreshDisabled = quoteLoading || manualRefreshCoolingDown || !numericForQuote;
 
   const {
     refresh,
@@ -129,6 +138,11 @@ export function DemoSwap() {
     setSellRaw(formatMaxAmountForInput(stubSpendableBalance, sellMaxDecimals));
   }, [isConnected, stubSpendableBalance, sellMaxDecimals]);
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 3dd66dcbab93f5d07cae58afda851a9fdc7ebb35
   const handleSwapClick = () => {
     if (parseResult.status !== "ok" || !selectedPair) {
       toast.error("Enter a valid sell amount and select a pair.");
@@ -299,7 +313,7 @@ export function DemoSwap() {
             placeholder="0.0"
             value={sellRaw}
             aria-invalid={amountInputInvalid}
-            onChange={(e) => setSellRaw(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSellRaw(e.target.value)}
             className="text-lg font-medium"
           />
 
@@ -330,7 +344,10 @@ export function DemoSwap() {
             <span className="text-sm font-medium">Estimated receive</span>
             <div className="mt-1 text-2xl font-bold text-success">
               {quoteLoading && numericForQuote !== undefined ? (
-                "~ …"
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  ~ …
+                </span>
               ) : (
                 <>
                   {receivePreview}
