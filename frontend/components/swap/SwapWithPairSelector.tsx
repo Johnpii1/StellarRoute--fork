@@ -61,10 +61,11 @@ export function SwapWithPairSelector() {
           <h3 className="text-lg font-semibold mb-4">Swap Amount</h3>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label htmlFor="pay-amount-input" className="text-sm font-medium mb-2 block">
                 You sell ({selectedPair.base})
               </label>
               <Input
+                id="pay-amount-input"
                 type="text"
                 inputMode="decimal"
                 placeholder="0.0"

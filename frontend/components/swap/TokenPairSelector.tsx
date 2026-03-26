@@ -215,6 +215,7 @@ export function TokenPairSelector({
             className="shrink-0"
           >
             <ArrowLeftRight className="h-4 w-4" />
+            <span className="sr-only">Swap base and quote assets</span>
           </Button>
 
           <div className="flex-1">

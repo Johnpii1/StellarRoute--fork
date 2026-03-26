@@ -25,8 +25,9 @@ export function PairSelector({ payAmount, onPayAmountChange, receiveAmount }: Pa
             inputMode="decimal"
             autoComplete="off"
             autoCorrect="off"
+            aria-label="Pay amount"
           />
-          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9">
+          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9" aria-label="Select token to pay">
             <span className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs">X</div>
               <span className="font-semibold text-sm">XLM</span>
@@ -38,7 +39,7 @@ export function PairSelector({ payAmount, onPayAmountChange, receiveAmount }: Pa
       </div>
 
       <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-10">
-        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full shadow-sm bg-background border-border">
+        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full shadow-sm bg-background border-border" aria-label="Swap pay and receive tokens">
           <ArrowDown className="h-4 w-4" />
         </Button>
       </div>
@@ -53,8 +54,9 @@ export function PairSelector({ payAmount, onPayAmountChange, receiveAmount }: Pa
             value={receiveAmount}
             readOnly
             aria-readonly="true"
+            aria-label="Receive amount"
           />
-          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9">
+          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9" aria-label="Select token to receive">
             <span className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-xs text-blue-500">U</div>
               <span className="font-semibold text-sm">USDC</span>

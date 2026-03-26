@@ -65,7 +65,11 @@ export function RouteDisplay({ amountOut }: RouteDisplayProps) {
       {/* Task 5.4: Alternative Routes — overflow-x-hidden on container, flex-wrap on inner row */}
       <div className="pt-3 border-t border-border/50 overflow-x-hidden">
         <h4 className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">Alternative Routes</h4>
-        <div className="flex flex-wrap items-center justify-between opacity-60 hover:opacity-100 transition-opacity cursor-pointer p-1 -mx-1 rounded hover:bg-muted/50 gap-1">
+        <button
+          type="button"
+          className="w-full flex flex-wrap items-center justify-between opacity-60 hover:opacity-100 transition-opacity p-1 -mx-1 rounded hover:bg-muted/50 gap-1 text-left"
+          onClick={() => console.log("Selecting alternative route...")}
+        >
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-medium">XLM</span>
             <ArrowRight className="h-3 w-3" />
@@ -74,7 +78,7 @@ export function RouteDisplay({ amountOut }: RouteDisplayProps) {
             <span className="font-medium">USDC</span>
           </div>
           <span className="text-xs font-medium text-muted-foreground">≈ {(parseFloat(amountOut) * 0.995).toFixed(4)}</span>
-        </div>
+        </button>
       </div>
     </div>
   );
