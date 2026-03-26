@@ -34,11 +34,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   });
 
   // Sync with next-themes theme
-  useEffect(() => {
-    if (theme) {
-      setSettings((prev) => ({ ...prev, theme: theme as ThemeSetting }));
-    }
-  }, [theme]);
+useEffect(() => {
+  if (!theme) return;
+
+  setSettings((prev) => {
+    if (prev.theme === theme) return prev;
+    return { ...prev, theme: theme as ThemeSetting };
+  });
+}, [theme]);
 
   // Handle local storage saving
   useEffect(() => {
