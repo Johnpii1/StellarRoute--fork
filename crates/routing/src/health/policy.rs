@@ -144,6 +144,7 @@ pub struct ExcludedVenueInfo {
 pub enum ExclusionReason {
     PolicyThreshold { threshold: f64 },
     Override,
+    StaleData,
 }
 
 #[cfg(test)]

@@ -24,6 +24,10 @@ pub struct HealthResponse {
 pub struct CacheMetricsResponse {
     pub quote_hits: u64,
     pub quote_misses: u64,
+    /// Total quote requests rejected because all inputs were stale
+    pub stale_quote_rejections: u64,
+    /// Total stale inputs excluded across all successful quotes
+    pub stale_inputs_excluded: u64,
 }
 
 /// Trading pair information — matches GET /api/v1/pairs spec
@@ -122,6 +126,18 @@ pub struct OrderbookLevel {
     pub total: String,
 }
 
+/// Freshness metadata about the data sources used to compute a quote
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct DataFreshness {
+    /// Number of fresh candidates used to compute the quote
+    pub fresh_count: usize,
+    /// Number of stale candidates excluded from the quote (zero when all are fresh)
+    pub stale_count: usize,
+    /// Maximum observed staleness in seconds among all evaluated candidates
+    pub max_staleness_secs: u64,
+}
+
 /// Price quote response with expiry and staleness metadata
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct QuoteResponse {
@@ -149,6 +165,9 @@ pub struct QuoteResponse {
     /// Venues excluded from routing and the reason for each exclusion
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exclusion_diagnostics: Option<ExclusionDiagnostics>,
+    /// Freshness metadata about the data sources used to compute this quote
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data_freshness: Option<DataFreshness>,
 }
 
 /// Configuration for quote staleness detection
@@ -247,6 +266,7 @@ pub struct ExcludedVenueInfo {
 pub enum ExclusionReason {
     PolicyThreshold { threshold: f64 },
     Override,
+    StaleData,
 }
 
 /// Error response
@@ -270,5 +290,102 @@ impl ErrorResponse {
     pub fn with_details(mut self, details: serde_json::Value) -> Self {
         self.details = Some(details);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // -----------------------------------------------------------------------
+    // Property test: Round-trip serialization of QuoteResponse with
+    // data_freshness (Property 2 — Validates: Requirements 7.2)
+    // -----------------------------------------------------------------------
+
+    use proptest::prelude::*;
+
+    prop_compose! {
+        fn arb_data_freshness()(
+            fresh_count in 0usize..100,
+            stale_count in 0usize..100,
+            max_staleness_secs in 0u64..3600,
+        ) -> DataFreshness {
+            DataFreshness { fresh_count, stale_count, max_staleness_secs }
+        }
+    }
+
+    proptest! {
+        /// **Property 2: Round-trip — serialize then deserialize any `QuoteResponse`
+        /// with a `data_freshness` field produces a value equal to the original.**
+        ///
+        /// **Validates: Requirements 7.2**
+        #[test]
+        fn data_freshness_round_trip(df in arb_data_freshness()) {
+            let serialized = serde_json::to_string(&df).expect("serialize");
+            let deserialized: DataFreshness = serde_json::from_str(&serialized).expect("deserialize");
+            prop_assert_eq!(df, deserialized);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Unit tests for DataFreshness serialization edge cases (Task 6.2)
+    // -----------------------------------------------------------------------
+
+    /// Req 7.3: Unknown fields inside `data_freshness` are ignored on deserialization.
+    #[test]
+    fn unknown_fields_in_data_freshness_are_ignored() {
+        let json = r#"{"fresh_count":3,"stale_count":1,"max_staleness_secs":45,"unknown_field":"ignored"}"#;
+        let df: DataFreshness = serde_json::from_str(json).expect("should deserialize without error");
+        assert_eq!(df.fresh_count, 3);
+        assert_eq!(df.stale_count, 1);
+        assert_eq!(df.max_staleness_secs, 45);
+    }
+
+    /// Req 7.4: Missing `data_freshness` field in QuoteResponse deserializes to None.
+    #[test]
+    fn missing_data_freshness_deserializes_to_none() {
+        let json = r#"{
+            "base_asset": {"asset_type": "native"},
+            "quote_asset": {"asset_type": "native"},
+            "amount": "1.0000000",
+            "price": "1.0000000",
+            "total": "1.0000000",
+            "quote_type": "sell",
+            "path": [],
+            "timestamp": 1700000000000
+        }"#;
+        let qr: QuoteResponse = serde_json::from_str(json).expect("should deserialize without error");
+        assert!(qr.data_freshness.is_none());
+    }
+
+    /// Req 3.3: stale_count is zero when all candidates are fresh.
+    #[test]
+    fn stale_count_zero_when_all_fresh() {
+        let df = DataFreshness {
+            fresh_count: 5,
+            stale_count: 0,
+            max_staleness_secs: 10,
+        };
+        let serialized = serde_json::to_string(&df).expect("serialize");
+        let deserialized: DataFreshness = serde_json::from_str(&serialized).expect("deserialize");
+        assert_eq!(deserialized.stale_count, 0);
+    }
+
+    /// Req 3.4: DataFreshness serializes with snake_case field names.
+    #[test]
+    fn data_freshness_uses_snake_case_field_names() {
+        let df = DataFreshness {
+            fresh_count: 2,
+            stale_count: 1,
+            max_staleness_secs: 30,
+        };
+        let json = serde_json::to_value(&df).expect("serialize");
+        assert!(json.get("fresh_count").is_some(), "fresh_count key must exist");
+        assert!(json.get("stale_count").is_some(), "stale_count key must exist");
+        assert!(json.get("max_staleness_secs").is_some(), "max_staleness_secs key must exist");
+        // Ensure no camelCase variants leaked
+        assert!(json.get("freshCount").is_none());
+        assert!(json.get("staleCount").is_none());
+        assert!(json.get("maxStalenessSecs").is_none());
     }
 }

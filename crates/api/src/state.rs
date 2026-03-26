@@ -23,10 +23,22 @@ impl Default for CachePolicy {
 }
 
 /// In-process cache metrics
-#[derive(Default)]
 pub struct CacheMetrics {
     quote_hits: AtomicU64,
     quote_misses: AtomicU64,
+    stale_quote_rejections: AtomicU64,
+    stale_inputs_excluded: AtomicU64,
+}
+
+impl Default for CacheMetrics {
+    fn default() -> Self {
+        Self {
+            quote_hits: AtomicU64::new(0),
+            quote_misses: AtomicU64::new(0),
+            stale_quote_rejections: AtomicU64::new(0),
+            stale_inputs_excluded: AtomicU64::new(0),
+        }
+    }
 }
 
 impl CacheMetrics {
@@ -38,10 +50,27 @@ impl CacheMetrics {
         self.quote_misses.fetch_add(1, Ordering::Relaxed);
     }
 
+    /// Increment the stale-quote-rejection counter by one.
+    pub fn inc_stale_rejection(&self) {
+        self.stale_quote_rejections.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Add `n` to the stale-inputs-excluded counter.
+    pub fn add_stale_inputs_excluded(&self, n: u64) {
+        self.stale_inputs_excluded.fetch_add(n, Ordering::Relaxed);
+    }
+
     pub fn snapshot(&self) -> (u64, u64) {
         (
             self.quote_hits.load(Ordering::Relaxed),
             self.quote_misses.load(Ordering::Relaxed),
+        )
+    }
+
+    pub fn snapshot_staleness(&self) -> (u64, u64) {
+        (
+            self.stale_quote_rejections.load(Ordering::Relaxed),
+            self.stale_inputs_excluded.load(Ordering::Relaxed),
         )
     }
 }

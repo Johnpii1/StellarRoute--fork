@@ -1,8 +1,6 @@
 //! Integration-style tests for quote response shape and deterministic rationale metadata.
 
-use stellarroute_api::models::{
-    AssetInfo, PathStep, QuoteRationaleMetadata, QuoteResponse, VenueEvaluation,
-};
+use stellarroute_api::models::{AssetInfo, PathStep, QuoteRationaleMetadata, QuoteResponse, VenueEvaluation};
 
 #[test]
 fn quote_response_includes_rationale_metadata() {

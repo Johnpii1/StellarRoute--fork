@@ -16,9 +16,13 @@ use crate::{models::CacheMetricsResponse, state::AppState};
 )]
 pub async fn cache_metrics(State(state): State<Arc<AppState>>) -> Json<CacheMetricsResponse> {
     let (quote_hits, quote_misses) = state.cache_metrics.snapshot();
+    let (stale_quote_rejections, stale_inputs_excluded) =
+        state.cache_metrics.snapshot_staleness();
 
     Json(CacheMetricsResponse {
         quote_hits,
         quote_misses,
+        stale_quote_rejections,
+        stale_inputs_excluded,
     })
 }
