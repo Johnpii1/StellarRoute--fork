@@ -3,6 +3,7 @@
 use crate::error::{Result, RoutingError};
 use crate::impact::{AmmQuoteCalculator, OrderbookImpactCalculator};
 use crate::pathfinder::{LiquidityEdge, Pathfinder, PathfinderConfig, SwapPath};
+use crate::policy::RoutingPolicy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Instant;
@@ -201,12 +202,13 @@ impl HybridOptimizer {
         to: &str,
         edges: &[LiquidityEdge],
         amount_in: i128,
+        routing_policy: &RoutingPolicy,
     ) -> Result<OptimizerDiagnostics> {
         let start_time = Instant::now();
         let policy = self.active_policy();
 
         // Find all possible paths
-        let paths = self.pathfinder.find_paths(from, to, edges, amount_in)?;
+        let paths = self.pathfinder.find_paths(from, to, edges, amount_in, routing_policy)?;
 
         if paths.is_empty() {
             return Err(RoutingError::NoRoute(from.to_string(), to.to_string()));
@@ -324,6 +326,7 @@ impl HybridOptimizer {
         to: &str,
         edges: &[LiquidityEdge],
         amount_in: i128,
+        routing_policy: &RoutingPolicy,
     ) -> Result<Vec<(String, OptimizerDiagnostics)>> {
         let mut results = Vec::new();
         let original_policy = self.active_policy.clone();
@@ -331,7 +334,7 @@ impl HybridOptimizer {
 
         for env_name in policy_names {
             self.set_active_policy(&env_name)?;
-            let diagnostics = self.find_optimal_routes(from, to, edges, amount_in)?;
+            let diagnostics = self.find_optimal_routes(from, to, edges, amount_in, routing_policy)?;
             results.push((env_name.clone(), diagnostics));
         }
 
