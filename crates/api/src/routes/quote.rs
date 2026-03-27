@@ -16,7 +16,9 @@ use axum::{
 };
 use sqlx::Row;
 use std::sync::Arc;
-use tracing::{debug, info_span, Instrument};
+use tracing::{debug, info_span, warn, Instrument};
+use std::time::Duration;
+use tokio::time::timeout;
 
 use stellarroute_routing::health::filter::GraphFilter;
 use stellarroute_routing::health::freshness::{FreshnessGuard, FreshnessOutcome};
@@ -362,49 +364,41 @@ async fn find_best_price(
     quote_id: uuid::Uuid,
     amount: f64,
 ) -> Result<FindBestPriceResult> {
-    let rows = sqlx::query(
-        r#"
-                select
-                    venue_type,
-                    venue_ref,
-                    price::text as price,
-                    available_amount::text as available_amount
-                from normalized_liquidity
-        where selling_asset_id = $1
-          and buying_asset_id = $2
-        order by price asc, venue_type asc, venue_ref asc
-        "#,
-    )
-    .bind(base_id)
-    .bind(quote_id)
-    .fetch_all(&state.db)
-    .await?;
+    // Parallel multi-source quote computation
+    let sdex_timeout = Duration::from_millis(500);
+    let amm_timeout = Duration::from_millis(500);
 
-    tracing::Span::current().record("candidates_count", rows.len());
-    tracing::info!(
-        stage = "fetch_candidates",
-        count = rows.len(),
-        "Fetched candidate venues from DB"
+    let sdex_task = fetch_source_candidates(state, base_id, quote_id, "sdex");
+    let amm_task = fetch_source_candidates(state, base_id, quote_id, "amm");
+
+    let (sdex_res, amm_res) = tokio::join!(
+        timeout(sdex_timeout, sdex_task),
+        timeout(amm_timeout, amm_task)
     );
 
-    let candidates = rows
-        .into_iter()
-        .map(|row| {
-            let venue_type: String = row.get("venue_type");
-            let venue_ref: String = row.get("venue_ref");
-            let price: f64 = row.get::<String, _>("price").parse().unwrap_or(0.0);
-            let available_amount: f64 = row
-                .get::<String, _>("available_amount")
-                .parse()
-                .unwrap_or(0.0);
-            DirectVenueCandidate {
-                venue_type,
-                venue_ref,
-                price,
-                available_amount,
-            }
-        })
-        .collect::<Vec<_>>();
+    let mut candidates = Vec::new();
+
+    match sdex_res {
+        Ok(Ok(mut res)) => candidates.append(&mut res),
+        Ok(Err(e)) => warn!("SDEX source error: {:?}", e),
+        Err(_) => warn!("SDEX source timed out"),
+    }
+
+    match amm_res {
+        Ok(Ok(mut res)) => candidates.append(&mut res),
+        Ok(Err(e)) => warn!("AMM source error: {:?}", e),
+        Err(_) => warn!("AMM source timed out"),
+    }
+
+    // Deterministic merge: sort by price, then venue type, then ref
+    candidates.sort_by(|a, b| {
+        a.price
+            .partial_cmp(&b.price)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.venue_type.cmp(&b.venue_type))
+            .then_with(|| a.venue_ref.cmp(&b.venue_ref))
+    });
+
 
     // Capture a single wall-clock instant for both scorer_inputs construction and freshness eval
     let now = chrono::Utc::now();
@@ -678,6 +672,52 @@ async fn maybe_invalidate_quote_cache(
     }
 
     Ok(())
+}
+
+/// Fetch candidates from a specific source
+async fn fetch_source_candidates(
+    state: &AppState,
+    base_id: uuid::Uuid,
+    quote_id: uuid::Uuid,
+    venue_type: &str,
+) -> Result<Vec<DirectVenueCandidate>> {
+    let rows = sqlx::query(
+        r#"
+                select
+                    venue_type,
+                    venue_ref,
+                    price::text as price,
+                    available_amount::text as available_amount
+                from normalized_liquidity
+        where selling_asset_id = $1
+          and buying_asset_id = $2
+          and venue_type = $3
+        "#,
+    )
+    .bind(base_id)
+    .bind(quote_id)
+    .bind(venue_type)
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            let venue_type: String = row.get("venue_type");
+            let venue_ref: String = row.get("venue_ref");
+            let price: f64 = row.get::<String, _>("price").parse().unwrap_or(0.0);
+            let available_amount: f64 = row
+                .get::<String, _>("available_amount")
+                .parse()
+                .unwrap_or(0.0);
+            DirectVenueCandidate {
+                venue_type,
+                venue_ref,
+                price,
+                available_amount,
+            }
+        })
+        .collect())
 }
 
 async fn get_liquidity_revision(
@@ -1037,5 +1077,35 @@ mod tests {
         );
         assert_eq!(data_freshness.fresh_count, 1);
         assert_eq!(data_freshness.max_staleness_secs, 300);
+    }
+    #[tokio::test]
+    async fn test_parallel_execution_latency() {
+        use std::time::{Duration, Instant};
+        use tokio::time::sleep;
+
+        async fn simulated_source(delay_ms: u64) -> Result<Vec<u32>> {
+            sleep(Duration::from_millis(delay_ms)).await;
+            Ok(vec![1, 2, 3])
+        }
+
+        let delay = 100;
+
+        // Sequential
+        let start = Instant::now();
+        let _ = (simulated_source(delay).await, simulated_source(delay).await);
+        let seq_duration = start.elapsed();
+
+        // Parallel
+        let start = Instant::now();
+        let _ = tokio::join!(
+            simulated_source(delay),
+            simulated_source(delay)
+        );
+        let par_duration = start.elapsed();
+
+        println!("Sequential: {:?}, Parallel: {:?}", seq_duration, par_duration);
+        assert!(par_duration < seq_duration);
+        assert!(par_duration >= Duration::from_millis(delay));
+        assert!(par_duration < Duration::from_millis(delay * 2));
     }
 }
