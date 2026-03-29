@@ -19,6 +19,17 @@ pub struct HealthResponse {
     pub components: std::collections::HashMap<String, ComponentStatus>,
 }
 
+/// External dependency health probe response for readiness checks.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct DependenciesHealthResponse {
+    /// Overall dependency status: "ok" or "degraded"
+    pub status: String,
+    /// ISO-8601 UTC timestamp of this check
+    pub timestamp: String,
+    /// Per-dependency status map
+    pub components: std::collections::HashMap<String, String>,
+}
+
 /// Cache metrics response
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CacheMetricsResponse {
@@ -106,6 +117,12 @@ impl AssetInfo {
 pub struct PairsResponse {
     pub pairs: Vec<TradingPair>,
     pub total: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_cursor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prev_cursor: Option<String>,
 }
 
 /// Orderbook response

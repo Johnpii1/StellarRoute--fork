@@ -235,6 +235,11 @@ pub mod keys {
         "pairs:list".to_string()
     }
 
+    /// Cache key for a paginated trading pairs list.
+    pub fn pairs_list_page(limit: usize, offset: usize) -> String {
+        format!("pairs:list:{}:{}", limit, offset)
+    }
+
     /// Cache key for orderbook
     pub fn orderbook(base: &str, quote: &str) -> String {
         format!("orderbook:{}:{}", base, quote)
@@ -273,6 +278,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_keys() {
         assert_eq!(keys::pairs_list(), "pairs:list");
+        assert_eq!(keys::pairs_list_page(25, 50), "pairs:list:25:50");
         assert_eq!(keys::orderbook("XLM", "USDC"), "orderbook:XLM:USDC");
         assert_eq!(
             keys::quote("XLM", "USDC", "100", 50, "sell", true),

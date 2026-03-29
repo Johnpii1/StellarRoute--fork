@@ -240,4 +240,22 @@ mod tests {
         assert_eq!(percentile(&latencies, 95.0), 10);
         assert_eq!(percentile(&latencies, 99.0), 10);
     }
+
+    #[tokio::test]
+    async fn run_load_test_completes_without_hanging() {
+        let config = LoadTestConfig {
+            concurrent_requests: 4,
+            total_requests: 4,
+            requests_per_second: 1,
+            duration_secs: 1,
+        };
+
+        let result = tokio::time::timeout(
+            std::time::Duration::from_secs(2),
+            run_load_test(config, || {}),
+        )
+        .await;
+
+        assert!(result.is_ok(), "load test timed out unexpectedly");
+    }
 }

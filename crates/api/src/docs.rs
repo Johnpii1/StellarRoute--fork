@@ -3,7 +3,7 @@
 use utoipa::OpenApi;
 
 use crate::models::{
-    AssetInfo, CacheMetricsResponse, ErrorResponse, HealthResponse, OrderbookLevel,
+    AssetInfo, CacheMetricsResponse, DependenciesHealthResponse, ErrorResponse, HealthResponse, OrderbookLevel,
     OrderbookResponse, PairsResponse, PathStep, QuoteRationaleMetadata, QuoteResponse,
     RouteResponse, TradingPair, VenueEvaluation,
 };
@@ -13,14 +13,17 @@ use crate::models::{
 #[openapi(
     paths(
         crate::routes::health::health_check,
+        crate::routes::health::dependency_health,
         crate::routes::metrics::cache_metrics,
         crate::routes::pairs::list_pairs,
+        crate::routes::pairs::list_markets,
         crate::routes::orderbook::get_orderbook,
         crate::routes::quote::get_quote,
         crate::routes::quote::get_route,
     ),
     components(schemas(
         HealthResponse,
+        DependenciesHealthResponse,
         CacheMetricsResponse,
         PairsResponse,
         TradingPair,

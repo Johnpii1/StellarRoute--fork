@@ -33,6 +33,9 @@ fn trading_pair_serializes_to_spec_shape() {
     let response = PairsResponse {
         pairs: vec![pair],
         total: 1,
+        limit: Some(25),
+        next_cursor: None,
+        prev_cursor: None,
     };
 
     let json = serde_json::to_value(&response).expect("serialization failed");

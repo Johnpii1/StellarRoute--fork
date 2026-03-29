@@ -22,9 +22,11 @@ pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
         // Health check
         .route("/health", get(health::health_check))
+        .route("/health/deps", get(health::dependency_health))
         .route("/metrics/cache", get(metrics::cache_metrics))
         // API v1 routes
         .route("/api/v1/pairs", get(pairs::list_pairs))
+        .route("/api/v1/markets", get(pairs::list_markets))
         .route(
             "/api/v1/orderbook/:base/:quote",
             get(orderbook::get_orderbook),

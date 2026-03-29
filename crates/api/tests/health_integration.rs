@@ -54,6 +54,27 @@ fn health_response_serializes_to_spec_shape() {
     );
 }
 
+#[test]
+fn dependencies_health_response_serializes_to_spec_shape() {
+    use std::collections::HashMap;
+    use stellarroute_api::models::DependenciesHealthResponse;
+
+    let mut components = HashMap::new();
+    components.insert("database".to_string(), "healthy".to_string());
+    components.insert("horizon".to_string(), "degraded".to_string());
+
+    let response = DependenciesHealthResponse {
+        status: "degraded".to_string(),
+        timestamp: "2026-01-20T12:00:00+00:00".to_string(),
+        components,
+    };
+
+    let json = serde_json::to_value(&response).expect("serialization failed");
+    assert_eq!(json["status"], "degraded");
+    assert_eq!(json["components"]["database"], "healthy");
+    assert_eq!(json["components"]["horizon"], "degraded");
+}
+
 // ---------------------------------------------------------------------------
 // Live endpoint tests (require DATABASE_URL)
 // ---------------------------------------------------------------------------

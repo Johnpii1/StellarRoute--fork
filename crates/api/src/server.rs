@@ -17,7 +17,8 @@ use crate::{
     docs::ApiDoc,
     error::Result,
     middleware::{
-        request_id_layer, EndpointConfig, RateLimitLayer, RequestId, REQUEST_ID_HEADER,
+        api_versioning_layer, request_id_layer, EndpointConfig, RateLimitLayer, RequestId,
+        REQUEST_ID_HEADER,
     },
     routes,
     state::{AppState, CachePolicy},
@@ -182,6 +183,9 @@ impl Server {
         // Add request ID propagation as the outermost wrapper so downstream layers reuse the
         // same correlation ID in logs, spans, and responses.
         app = app.layer(axum::middleware::from_fn(request_id_layer));
+
+        // Add API lifecycle headers (Deprecation/Sunset/Link) for /api/v1 routes.
+        app = app.layer(axum::middleware::from_fn(api_versioning_layer));
 
         app
     }
