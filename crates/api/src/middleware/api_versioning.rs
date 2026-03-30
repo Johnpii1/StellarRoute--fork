@@ -12,7 +12,7 @@ const SUNSET_HEADER: &str = "sunset";
 const LINK_HEADER: &str = "link";
 
 fn sunset_value() -> String {
-    std::env::var("API_V1_SUNSET").unwrap_or_else(|_| "Wed, 31 Dec 2026 23:59:59 GMT".to_string())
+    std::env::var("API_V1_SUNSET").unwrap_or_else(|_| "Wed, 01 Jul 2026 00:00:00 GMT".to_string())
 }
 
 fn link_value() -> String {
@@ -32,20 +32,28 @@ pub async fn api_versioning_layer(
     let mut response = next.run(request).await;
 
     if is_v1_path(&path) {
-        if let Ok(value) = HeaderValue::from_str("true") {
-            response
-                .headers_mut()
-                .insert(HeaderName::from_static(DEPRECATION_HEADER), value);
+        // Don't override headers that were already set by more specific middleware
+        // (e.g. legacy-route deprecation that attaches a successor-version Link).
+        if !response.headers().contains_key(DEPRECATION_HEADER) {
+            if let Ok(value) = HeaderValue::from_str("true") {
+                response
+                    .headers_mut()
+                    .insert(HeaderName::from_static(DEPRECATION_HEADER), value);
+            }
         }
-        if let Ok(value) = HeaderValue::from_str(&sunset_value()) {
-            response
-                .headers_mut()
-                .insert(HeaderName::from_static(SUNSET_HEADER), value);
+        if !response.headers().contains_key(SUNSET_HEADER) {
+            if let Ok(value) = HeaderValue::from_str(&sunset_value()) {
+                response
+                    .headers_mut()
+                    .insert(HeaderName::from_static(SUNSET_HEADER), value);
+            }
         }
-        if let Ok(value) = HeaderValue::from_str(&link_value()) {
-            response
-                .headers_mut()
-                .insert(HeaderName::from_static(LINK_HEADER), value);
+        if !response.headers().contains_key(LINK_HEADER) {
+            if let Ok(value) = HeaderValue::from_str(&link_value()) {
+                response
+                    .headers_mut()
+                    .insert(HeaderName::from_static(LINK_HEADER), value);
+            }
         }
     }
 

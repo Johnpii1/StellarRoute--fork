@@ -10,7 +10,7 @@ use axum::{
 };
 use serde_json::Value;
 use sqlx::PgPool;
-use stellarroute_api::{Server, ServerConfig};
+use stellarroute_api::{state::DatabasePools, Server, ServerConfig};
 use tower::ServiceExt; // for `oneshot`
 
 // ---------------------------------------------------------------------------
@@ -115,7 +115,9 @@ async fn get_pairs_returns_200_and_valid_json() {
         quote_cache_ttl_seconds: 2,
     };
 
-    let router = Server::new(config, pool).await.into_router();
+    let router = Server::new(config, DatabasePools::new(pool, None))
+        .await
+        .into_router();
 
     let response = router
         .oneshot(
@@ -171,9 +173,12 @@ async fn get_pairs_returns_correct_content_type() {
         .await
         .expect("Failed to connect to database");
 
-    let router = Server::new(ServerConfig::default(), pool)
-        .await
-        .into_router();
+    let router = Server::new(
+        ServerConfig::default(),
+        DatabasePools::new(pool, None),
+    )
+    .await
+    .into_router();
 
     let response = router
         .oneshot(

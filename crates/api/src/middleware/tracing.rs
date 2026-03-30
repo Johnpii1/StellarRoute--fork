@@ -70,6 +70,7 @@ pub async fn trace_layer(request: Request<Body>, next: Next) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opentelemetry::trace::TraceContextExt;
     use axum::http::HeaderValue;
 
     #[test]
@@ -87,7 +88,8 @@ mod tests {
             HeaderValue::from_static("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"),
         );
         let ctx = extract_context_from_headers(&headers);
-        let span_ctx = ctx.span().span_context();
+        let span = ctx.span();
+        let span_ctx = span.span_context();
         assert_eq!(
             span_ctx.trace_id().to_string(),
             "0af7651916cd43dd8448eb211c80319c"

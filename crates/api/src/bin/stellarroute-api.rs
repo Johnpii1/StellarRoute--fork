@@ -2,7 +2,7 @@
 
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
-use stellarroute_api::{telemetry, Server, ServerConfig};
+use stellarroute_api::{telemetry, state::DatabasePools, Server, ServerConfig};
 use tracing::{error, info};
 
 #[tokio::main]
@@ -64,19 +64,19 @@ async fn main() {
         .acquire_timeout(Duration::from_secs(connection_timeout_secs))
         .idle_timeout(Duration::from_secs(idle_timeout_secs))
         .max_lifetime(Duration::from_secs(max_lifetime_secs))
-        .after_connect(move |mut conn, _meta| {
+        .after_connect(move |conn, _meta| {
             Box::pin(async move {
                 sqlx::query(&format!("SET statement_timeout = '{}ms'", statement_timeout_ms))
-                    .execute(&mut conn)
+                    .execute(&mut *conn)
                     .await?;
                 sqlx::query(&format!("SET lock_timeout = '{}ms'", lock_timeout_ms))
-                    .execute(&mut conn)
+                    .execute(&mut *conn)
                     .await?;
                 sqlx::query(&format!(
                     "SET idle_in_transaction_session_timeout = '{}ms'",
                     idle_in_txn_timeout_ms
                 ))
-                .execute(&mut conn)
+                .execute(&mut *conn)
                 .await?;
                 Ok(())
             })
@@ -114,7 +114,7 @@ async fn main() {
     };
 
     // Create and start server
-    let server = Server::new(config, pool).await;
+    let server = Server::new(config, DatabasePools::new(pool, None)).await;
 
     if let Err(e) = server.start().await {
         error!("Server error: {}", e);

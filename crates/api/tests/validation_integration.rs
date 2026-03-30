@@ -9,7 +9,7 @@ use axum::{
 };
 use serde_json::Value;
 use sqlx::postgres::PgPoolOptions;
-use stellarroute_api::{Server, ServerConfig};
+use stellarroute_api::{state::DatabasePools, Server, ServerConfig};
 use tower::ServiceExt;
 
 async fn setup_test_router() -> axum::Router {
@@ -20,7 +20,10 @@ async fn setup_test_router() -> axum::Router {
         .connect_lazy("postgres://localhost/unused")
         .expect("Failed to create lazy pool");
 
-    Server::new(ServerConfig::default(), pool)
+    Server::new(
+        ServerConfig::default(),
+        DatabasePools::new(pool, None),
+    )
         .await
         .into_router()
 }

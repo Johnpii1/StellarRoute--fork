@@ -96,35 +96,57 @@ pub async fn get_quote(
     );
 
     async move {
-        let (res, cache_hit) = get_quote_inner(state, base_asset, quote_asset, params, explain).await;
+        match get_quote_inner(state, base_asset, quote_asset, params, explain).await {
+            Ok((quote, cache_hit)) => {
+                let error_class = "none";
+                let latency_ms = start_time.elapsed().as_millis() as u64;
 
-        let error_class = match &res {
-            Ok(_) => "none",
-            Err(ApiError::Validation(_)) | Err(ApiError::InvalidAsset(_)) => "validation",
-            Err(ApiError::NotFound(_)) | Err(ApiError::NoRouteFound) => "not_found",
-            Err(ApiError::StaleMarketData { .. }) => "stale_market_data",
-            Err(_) => "internal",
-        };
+                let span = tracing::Span::current();
+                span.record("error_class", error_class);
+                span.record("latency_ms", latency_ms);
 
-        let latency_ms = start_time.elapsed().as_millis() as u64;
+                // Record Prometheus metrics
+                crate::metrics::record_quote_latency(
+                    std::time::Duration::from_millis(latency_ms),
+                    error_class,
+                    cache_hit,
+                );
 
-        let span = tracing::Span::current();
-        span.record("error_class", error_class);
-        span.record("latency_ms", latency_ms);
+                tracing::info!(
+                    metric = "stellarroute.quote.request",
+                    "Quote pipeline completed"
+                );
 
-        // Record Prometheus metrics
-        crate::metrics::record_quote_latency(
-            std::time::Duration::from_millis(latency_ms),
-            error_class,
-            cache_hit,
-        );
+                Ok(Json(quote))
+            }
+            Err(e) => {
+                let error_class = match &e {
+                    ApiError::Validation(_) | ApiError::InvalidAsset(_) => "validation",
+                    ApiError::NotFound(_) | ApiError::NoRouteFound => "not_found",
+                    ApiError::StaleMarketData { .. } => "stale_market_data",
+                    _ => "internal",
+                };
+                let latency_ms = start_time.elapsed().as_millis() as u64;
 
-        tracing::info!(
-            metric = "stellarroute.quote.request",
-            "Quote pipeline completed"
-        );
+                let span = tracing::Span::current();
+                span.record("error_class", error_class);
+                span.record("latency_ms", latency_ms);
 
-        res.map(Json)
+                // Record Prometheus metrics (errors always count as cache_hit=false)
+                crate::metrics::record_quote_latency(
+                    std::time::Duration::from_millis(latency_ms),
+                    error_class,
+                    false,
+                );
+
+                tracing::info!(
+                    metric = "stellarroute.quote.request",
+                    "Quote pipeline failed"
+                );
+
+                Err(e)
+            }
+        }
     }
     .instrument(span)
     .await
@@ -178,7 +200,7 @@ async fn get_quote_inner(
     quote_asset: AssetPath,
     params: QuoteParams,
     explain: bool,
-) -> (Result<QuoteResponse>, bool) {
+) -> Result<(QuoteResponse, bool)> {
     let base = base_asset.to_canonical();
     let quote = quote_asset.to_canonical();
 
@@ -227,7 +249,7 @@ async fn get_quote_inner(
     let quote_cache_key_c = quote_cache_key.clone();
 
     // Use single-flight to coalesce identical concurrent requests
-    let result_arc: Arc<crate::error::Result<QuoteResponse>> = state
+    let result_arc: Arc<crate::error::Result<(QuoteResponse, bool)>> = state
         .quote_single_flight
         .execute(&quote_cache_key, || async move {
             let state = state_c;
@@ -343,13 +365,9 @@ async fn get_quote_inner(
         .await;
 
     match Arc::try_unwrap(result_arc) {
-        Ok((response, cache_hit)) => (Ok(response), cache_hit),
-        Err(arc_res) => {
-            let (response, cache_hit) = *arc_res;
-            (response, cache_hit)
-        }
+        Ok(res) => res,
+        Err(arc_res) => arc_res.as_ref().clone(),
     }
-}
 }
 
 /// Get routing path for a trading pair

@@ -147,6 +147,7 @@ mod tests {
             source_timestamp: None,
             ttl_seconds: None,
             rationale: None,
+            price_impact: None,
             exclusion_diagnostics: None,
             data_freshness: Some(DataFreshness {
                 fresh_count: 1,

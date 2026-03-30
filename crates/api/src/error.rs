@@ -78,27 +78,27 @@ impl IntoResponse for ApiError {
             ),
             ApiError::RateLimitExceeded => (
                 StatusCode::TOO_MANY_REQUESTS,
-                ApiErrorCode::RateLimitExceeded.as_str().to_string(),
+                ApiErrorCode::RateLimitExceeded,
                 "Too many requests. Please try again later.".to_string(),
             ),
             ApiError::Overloaded(msg) => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                ApiErrorCode::Overloaded.as_str().to_string(),
+                ApiErrorCode::Overloaded,
                 msg,
             ),
             ApiError::Unauthorized(msg) => (
                 StatusCode::UNAUTHORIZED,
-                ApiErrorCode::Unauthorized.as_str().to_string(),
+                ApiErrorCode::Unauthorized,
                 msg,
             ),
             ApiError::InvalidAsset(msg) => (
                 StatusCode::BAD_REQUEST,
-                ApiErrorCode::InvalidAsset.as_str().to_string(),
+                ApiErrorCode::InvalidAsset,
                 msg,
             ),
             ApiError::NoRouteFound => (
                 StatusCode::NOT_FOUND,
-                ApiErrorCode::NoRoute.as_str().to_string(),
+                ApiErrorCode::NoRoute,
                 "No trading route found for this pair".to_string(),
             ),
             ApiError::StaleMarketData {
@@ -124,7 +124,7 @@ impl IntoResponse for ApiError {
             }
             ApiError::Database(_) | ApiError::Internal(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                ApiErrorCode::InternalError.as_str().to_string(),
+                ApiErrorCode::InternalError,
                 "An internal error occurred".to_string(),
             ),
         };

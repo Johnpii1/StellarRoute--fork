@@ -15,6 +15,30 @@ use stellarroute_routing::health::circuit_breaker::CircuitBreakerRegistry;
 
 use crate::worker::{JobQueue, RouteWorkerPool, WorkerPoolConfig};
 
+/// Primary database pool for write operations plus an optional replica pool
+/// for read-heavy endpoints.
+#[derive(Clone, Debug)]
+pub struct DatabasePools {
+    primary: PgPool,
+    replica: Option<PgPool>,
+}
+
+impl DatabasePools {
+    pub fn new(primary: PgPool, replica: Option<PgPool>) -> Self {
+        Self { primary, replica }
+    }
+
+    /// Pool used for read-only queries. Falls back to the primary pool when
+    /// no replica is configured.
+    pub fn read_pool(&self) -> &PgPool {
+        self.replica.as_ref().unwrap_or(&self.primary)
+    }
+
+    pub fn write_pool(&self) -> &PgPool {
+        &self.primary
+    }
+}
+
 /// Cache policy configuration
 #[derive(Debug, Clone)]
 pub struct CachePolicy {
@@ -86,7 +110,7 @@ impl CacheMetrics {
 #[derive(Clone)]
 pub struct AppState {
     /// Database connection pool
-    pub db: PgPool,
+    pub db: DatabasePools,
     /// Redis cache manager (optional)
     pub cache: Option<Arc<Mutex<CacheManager>>>,
     /// API version
@@ -98,7 +122,7 @@ pub struct AppState {
     /// Route computation worker pool
     pub worker_pool: Arc<RouteWorkerPool>,
     /// Single-flight manager for quotes to prevent stampedes
-    pub quote_single_flight: Arc<SingleFlight<crate::error::Result<QuoteResponse>>>,
+    pub quote_single_flight: Arc<SingleFlight<crate::error::Result<(QuoteResponse, bool)>>>,
 
     /// Optional replay capture hook (None when REPLAY_CAPTURE_ENABLED=false)
     pub replay_capture: Option<Arc<CaptureHook>>,
@@ -115,13 +139,13 @@ pub struct AppState {
 
 impl AppState {
     /// Create new application state
-    pub fn new(db: PgPool) -> Self {
+    pub fn new(db: DatabasePools) -> Self {
         Self::new_with_policy(db, CachePolicy::default())
     }
 
-    pub fn new_with_policy(db: PgPool, cache_policy: CachePolicy) -> Self {
-        let worker_pool = Self::create_worker_pool(db.clone());
-        let graph_manager = Arc::new(GraphManager::new(db.clone()));
+    pub fn new_with_policy(db: DatabasePools, cache_policy: CachePolicy) -> Self {
+        let worker_pool = Self::create_worker_pool(db.write_pool().clone());
+        let graph_manager = Arc::new(GraphManager::new(db.write_pool().clone()));
         graph_manager.clone().start_sync();
 
         Self {
@@ -132,7 +156,7 @@ impl AppState {
             cache_metrics: Arc::new(CacheMetrics::default()),
             worker_pool,
             quote_single_flight: Arc::new(
-                SingleFlight::<crate::error::Result<QuoteResponse>>::new(),
+                SingleFlight::<crate::error::Result<(QuoteResponse, bool)>>::new(),
             ),
             replay_capture: None,
             routes_single_flight: Arc::new(SingleFlight::new()),
@@ -143,17 +167,17 @@ impl AppState {
     }
 
     /// Create new application state with cache
-    pub fn with_cache(db: PgPool, cache: CacheManager) -> Self {
+    pub fn with_cache(db: DatabasePools, cache: CacheManager) -> Self {
         Self::with_cache_and_policy(db, cache, CachePolicy::default())
     }
 
     pub fn with_cache_and_policy(
-        db: PgPool,
+        db: DatabasePools,
         cache: CacheManager,
         cache_policy: CachePolicy,
     ) -> Self {
-        let worker_pool = Self::create_worker_pool(db.clone());
-        let graph_manager = Arc::new(GraphManager::new(db.clone()));
+        let worker_pool = Self::create_worker_pool(db.write_pool().clone());
+        let graph_manager = Arc::new(GraphManager::new(db.write_pool().clone()));
         graph_manager.clone().start_sync();
 
         Self {
@@ -164,7 +188,7 @@ impl AppState {
             cache_metrics: Arc::new(CacheMetrics::default()),
             worker_pool,
             quote_single_flight: Arc::new(
-                SingleFlight::<crate::error::Result<QuoteResponse>>::new(),
+                SingleFlight::<crate::error::Result<(QuoteResponse, bool)>>::new(),
             ),
             replay_capture: None,
             routes_single_flight: Arc::new(SingleFlight::new()),

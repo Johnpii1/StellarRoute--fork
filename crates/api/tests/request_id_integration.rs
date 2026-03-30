@@ -5,7 +5,7 @@ use axum::{
     http::{header::HeaderName, HeaderValue, Request, StatusCode},
 };
 use sqlx::postgres::PgPoolOptions;
-use stellarroute_api::{Server, ServerConfig};
+use stellarroute_api::{state::DatabasePools, Server, ServerConfig};
 use tower::ServiceExt;
 
 async fn build_test_server() -> Server {
@@ -13,7 +13,7 @@ async fn build_test_server() -> Server {
         .connect_lazy("postgresql://stellarroute:stellarroute_dev@localhost:5432/stellarroute")
         .expect("lazy pool should build");
 
-    Server::new(ServerConfig::default(), pool).await
+    Server::new(ServerConfig::default(), DatabasePools::new(pool, None)).await
 }
 
 #[tokio::test]

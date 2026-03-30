@@ -123,7 +123,10 @@ fn numeric_values_equal(a: &serde_json::Value, b: &serde_json::Value) -> bool {
     // Try numeric comparison for string values
     if let (Some(sa), Some(sb)) = (a.as_str(), b.as_str()) {
         if let (Ok(fa), Ok(fb)) = (sa.parse::<f64>(), sb.parse::<f64>()) {
-            return (fa - fb).abs() < NUMERIC_TOLERANCE;
+            // Allow a tiny epsilon for f64 parse/rounding noise so that
+            // decimal strings that differ by exactly 1e-7 (after formatting)
+            // are treated as equal.
+            return (fa - fb).abs() <= NUMERIC_TOLERANCE + 1e-12;
         }
     }
     false
