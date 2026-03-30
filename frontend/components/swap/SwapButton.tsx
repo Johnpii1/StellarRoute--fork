@@ -9,6 +9,7 @@ export type SwapButtonState =
   | "no_amount"
   | "insufficient_balance"
   | "high_price_impact"
+  | "high_impact_warning"
   | "ready"
   | "executing"
   | "error";
@@ -57,10 +58,19 @@ export function SwapButton({
       case "high_price_impact":
         return {
           label: "Price Impact Too High",
-          disabled: true, // or false if user can bypass, but requirement said disabled or warning
+          disabled: true,
           variant: "destructive" as const,
           icon: <AlertCircle className="mr-2 h-5 w-5" />,
           className: "bg-destructive shadow-destructive/20",
+        };
+      case "high_impact_warning":
+        return {
+          label: "Swap Anyway",
+          onClick: onSwap,
+          disabled: isLoading,
+          variant: "destructive" as const,
+          icon: isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <AlertCircle className="mr-2 h-5 w-5" />,
+          className: "bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20 animate-pulse",
         };
       case "executing":
         return {

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PriceImpactIndicator } from "./PriceImpactIndicator";
 
 interface PriceInfoPanelProps {
   rate?: string;
@@ -35,14 +36,6 @@ export function PriceInfoPanel({
     );
   }
 
-  const getImpactColor = (impact: number) => {
-    if (impact < 1) return "text-emerald-500";
-    if (impact < 5) return "text-amber-500";
-    return "text-destructive";
-  };
-
-  const impactColor = getImpactColor(priceImpact);
-
   return (
     <div className="rounded-2xl border border-border/40 bg-background/40 backdrop-blur-sm p-4 space-y-3 transition-all duration-300 hover:border-primary/20">
       <div className="flex justify-between items-center text-sm">
@@ -67,20 +60,8 @@ export function PriceInfoPanel({
       <div className="flex justify-between items-center text-sm">
         <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
           <span>Price Impact</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-3.5 w-3.5 opacity-50 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">The difference between the market price and your estimated price due to trade size.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
-        <span className={cn("font-bold tabular-nums", impactColor)}>
-          {priceImpact > 0 ? `${priceImpact.toFixed(2)}%` : '< 0.01%'}
-        </span>
+        <PriceImpactIndicator impact={priceImpact} />
       </div>
 
       <div className="flex justify-between items-center text-sm">
@@ -123,3 +104,4 @@ export function PriceInfoPanel({
     </div>
   );
 }
+
