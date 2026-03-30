@@ -109,25 +109,17 @@ Run tests with:
 npm test TokenPairSelector
 ```
 
-## i18n Scaffold
+## Performance Thresholds
 
-Swap copy now flows through `frontend/lib/swap-i18n.ts` so the core swap UI can translate user-visible strings without introducing a heavyweight runtime.
+To keep the DOM small on low-end devices, long lists now switch to windowed rendering once they cross these thresholds:
 
-- `en-US` is the default and fallback locale for swap copy
-- `zh-CN` is included as the first translated locale to prove the wiring end-to-end
-- other supported locales currently fall back to `en-US` until dedicated copy is added
+- alternative route list: virtualize when more than `8` items are present
+- transaction history activity list: virtualize when more than `24` rows are present
 
-### Adding or Updating Strings
-
-1. Add or update the key in the `SwapTranslationKey` union.
-2. Fill in the English copy inside the `en-US` dictionary.
-3. Add translated copy for any locale you want to support immediately.
-4. Use `useSwapI18n().t("your.key")` inside swap components instead of inline text.
-
-### Focused Verification
+Focused verification for the windowing behavior:
 
 ```bash
-npm test -- lib/swap-i18n.test.ts components/swap/SimulationPanel.test.tsx components/swap/SwapCard.test.tsx components/swap/RouteDisplay.test.tsx
+npm test -- components/swap/RouteDisplay.test.tsx components/TransactionHistory.test.tsx
 ```
 
 ## Design Decisions

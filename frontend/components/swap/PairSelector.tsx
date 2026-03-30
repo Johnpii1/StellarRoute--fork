@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ArrowDown } from "lucide-react";
 import { useOptionalSettings } from '@/components/providers/settings-provider';
 import { formatAmount, getUserLocale } from '@/lib/formatting';
-import { useSwapI18n } from "@/lib/swap-i18n";
 
 interface PairSelectorProps {
   payAmount: string;
@@ -23,7 +22,6 @@ export function PairSelector({
   receiveBalance = 0
 }: PairSelectorProps) {
   const settings = useOptionalSettings();
-  const { t } = useSwapI18n();
   const locale = settings?.settings.locale ?? getUserLocale();
 
   const formattedPayBalance = formatAmount(payBalance, locale, 2);
@@ -32,20 +30,20 @@ export function PairSelector({
   return (
     <div className="space-y-1 relative overflow-x-hidden">
       <div className="bg-muted/50 rounded-xl p-4 border border-border/50 transition-colors focus-within:border-primary/50">
-        <div className="text-sm font-medium text-muted-foreground mb-2">{t("swap.pair.youPay")}</div>
+        <div className="text-sm font-medium text-muted-foreground mb-2">You Pay</div>
         <div className="flex items-center justify-between gap-4 max-[359px]:flex-col">
           <Input 
             type="number" 
-            placeholder={t("swap.pair.amountPlaceholder")}
+            placeholder="0.00" 
             className="text-3xl font-medium p-0 border-0 shadow-none focus-visible:ring-0 bg-transparent h-auto max-w-[180px]"
             value={payAmount}
             onChange={(e) => onPayAmountChange(e.target.value)}
             inputMode="decimal"
             autoComplete="off"
             autoCorrect="off"
-            aria-label={t("swap.pair.payAmountAriaLabel")}
+            aria-label="Pay amount"
           />
-          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9" aria-label={t("swap.pair.selectPayTokenAriaLabel")}>
+          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9" aria-label="Select token to pay">
             <span className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs">X</div>
               <span className="font-semibold text-sm">XLM</span>
@@ -53,30 +51,28 @@ export function PairSelector({
             </span>
           </Button>
         </div>
-        <div className="text-sm text-muted-foreground mt-2">
-          {t("swap.pair.balance", { amount: formattedPayBalance })}
-        </div>
+        <div className="text-sm text-muted-foreground mt-2">Balance: {formattedPayBalance}</div>
       </div>
 
       <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-10">
-        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full shadow-sm bg-background border-border" aria-label={t("swap.pair.swapTokensAriaLabel")}>
+        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full shadow-sm bg-background border-border" aria-label="Swap pay and receive tokens">
           <ArrowDown className="h-4 w-4" />
         </Button>
       </div>
 
       <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
-        <div className="text-sm font-medium text-muted-foreground mb-2">{t("swap.pair.youReceive")}</div>
+        <div className="text-sm font-medium text-muted-foreground mb-2">You Receive</div>
         <div className="flex items-center justify-between gap-4 max-[359px]:flex-col">
           <Input 
             type="text" 
-            placeholder={t("swap.pair.amountPlaceholder")}
+            placeholder="0.00" 
             className="text-3xl font-medium p-0 border-0 shadow-none focus-visible:ring-0 bg-transparent h-auto max-w-[180px]"
             value={receiveAmount}
             readOnly
             aria-readonly="true"
-            aria-label={t("swap.pair.receiveAmountAriaLabel")}
+            aria-label="Receive amount"
           />
-          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9" aria-label={t("swap.pair.selectReceiveTokenAriaLabel")}>
+          <Button variant="secondary" className="rounded-full shadow-sm pr-2 pl-3 h-9" aria-label="Select token to receive">
             <span className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-xs text-blue-500">U</div>
               <span className="font-semibold text-sm">USDC</span>
@@ -84,9 +80,7 @@ export function PairSelector({
             </span>
           </Button>
         </div>
-        <div className="text-sm text-muted-foreground mt-2">
-          {t("swap.pair.balance", { amount: formattedReceiveBalance })}
-        </div>
+        <div className="text-sm text-muted-foreground mt-2">Balance: {formattedReceiveBalance}</div>
       </div>
     </div>
   );
