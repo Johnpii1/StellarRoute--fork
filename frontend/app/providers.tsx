@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 import { WalletProvider } from '@/components/providers/wallet-provider';
+import { SettingsProvider } from '@/components/providers/settings-provider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -17,9 +18,10 @@ export function Providers({ children, defaultTheme = 'dark' }: ProvidersProps) {
       defaultTheme={defaultTheme}
       enableSystem
       disableTransitionOnChange
-    > <WalletProvider defaultNetwork="testnet">
-      {children}
-      </WalletProvider>
+    >
+      <SettingsProvider>
+        <WalletProvider defaultNetwork="testnet">{children}</WalletProvider>
+      </SettingsProvider>
     </NextThemesProvider>
   );
 }

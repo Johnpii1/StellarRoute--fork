@@ -113,7 +113,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -333,7 +333,330 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ],
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+              "function_name": "execute_swap",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "amount_in"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 10000
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "deadline"
+                      },
+                      "val": {
+                        "u64": 100
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_execution_spread_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_price_impact_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_amount_out"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 0
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "not_before"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "recipient"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "route"
+                      },
+                      "val": {
+                        "map": [
+                          {
+                            "key": {
+                              "symbol": "estimated_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
+                              }
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "expires_at"
+                            },
+                            "val": {
+                              "u64": 99999
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "hops"
+                            },
+                            "val": {
+                              "vec": [
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "min_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
                               }
                             }
                           }
@@ -391,6 +714,62 @@
             "ext": "v0"
           },
           6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "FeeBalance"
+                },
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "FeeBalance"
+                    },
+                    {
+                      "vec": [
+                        {
+                          "symbol": "Native"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 28
+                  }
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          518400
         ]
       ],
       [
@@ -484,6 +863,62 @@
             "ext": "v0"
           },
           518400
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "TotalFeesCollected"
+                },
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "TotalFeesCollected"
+                    },
+                    {
+                      "vec": [
+                        {
+                          "symbol": "Native"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 28
+                  }
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          6307200
         ]
       ],
       [
@@ -703,6 +1138,39 @@
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 5541220902715666415
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 1033654523790656264
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 1033654523790656264
                   }
                 },
                 "durability": "temporary",
@@ -1000,7 +1468,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -1220,7 +1688,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
                               }
                             }
                           }
@@ -2044,6 +2512,46 @@
                 "symbol": "StellarRoute"
               },
               {
+                "symbol": "fee_col"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                },
+                {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 28
+                  }
+                },
+                {
+                  "u32": 0
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "StellarRoute"
+              },
+              {
                 "symbol": "swap"
               },
               {
@@ -2079,7 +2587,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 990
+                          "lo": 0
                         }
                       }
                     },
@@ -2299,7 +2807,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 900
+                          "lo": 0
                         }
                       }
                     }
@@ -2375,7 +2883,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 990
+                            "lo": 0
                           }
                         }
                       },
@@ -2595,7 +3103,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 900
+                            "lo": 0
                           }
                         }
                       }

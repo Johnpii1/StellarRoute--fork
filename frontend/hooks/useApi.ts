@@ -15,6 +15,7 @@ import {
   StellarRouteApiError,
   stellarRouteClient,
 } from '@/lib/api/client';
+import { QUOTE_AMOUNT_DEBOUNCE_MS } from '@/lib/quote-stale';
 import type {
   HealthStatus,
   Orderbook,
@@ -42,6 +43,7 @@ function useFetch<T>(
   fetcher: (signal: AbortSignal) => Promise<T>,
   deps: unknown[],
   refreshIntervalMs?: number,
+  skip?: boolean,
 ): UseApiState<T> & { refresh: () => void } {
   const [state, setState] = useState<UseApiState<T>>({
     data: undefined,
@@ -57,6 +59,11 @@ function useFetch<T>(
   const refresh = useCallback(() => setTick((n) => n + 1), []);
 
   useEffect(() => {
+    if (skip) {
+      setState({ data: undefined, loading: false, error: null });
+      return;
+    }
+
     const controller = new AbortController();
 
     setState((prev) => ({ ...prev, loading: true, error: null }));
@@ -80,14 +87,14 @@ function useFetch<T>(
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tick, ...deps]);
+  }, [tick, skip, ...deps]);
 
   // Auto-refresh
   useEffect(() => {
-    if (!refreshIntervalMs) return;
+    if (!refreshIntervalMs || skip) return;
     const id = setInterval(() => setTick((n) => n + 1), refreshIntervalMs);
     return () => clearInterval(id);
-  }, [refreshIntervalMs]);
+  }, [refreshIntervalMs, skip]);
 
   return { ...state, refresh };
 }
@@ -139,17 +146,27 @@ export function useOrderbook(
 }
 
 // ---------------------------------------------------------------------------
-// useQuote — fetch price quote with 400 ms debounce on amount
+// useQuote — debounced amount; no request while input is invalid / empty
 // ---------------------------------------------------------------------------
+
+
 
 export function useQuote(
   base: string,
   quote: string,
-  amount?: number,
+  amount: number | undefined,
   type: QuoteType = 'sell',
-  refreshIntervalMs = 30_000,
+  /** Optional polling interval. Prefer `useQuoteRefresh` for manual/auto refresh UX. */
+  refreshIntervalMs?: number,
 ): UseApiState<PriceQuote> & { refresh: () => void } {
-  const debouncedAmount = useDebounced(amount, 400);
+  const debouncedAmount = useDebounced(amount, QUOTE_AMOUNT_DEBOUNCE_MS);
+
+  const skip =
+    !base ||
+    !quote ||
+    debouncedAmount === undefined ||
+    !Number.isFinite(debouncedAmount) ||
+    debouncedAmount <= 0;
 
   return useFetch(
     (signal) =>
@@ -158,6 +175,26 @@ export function useQuote(
       }),
     [base, quote, debouncedAmount, type],
     refreshIntervalMs,
+    skip,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// useBatchQuote — fetch multiple quotes at once
+// ---------------------------------------------------------------------------
+
+import type { QuoteRequestItem, BatchQuoteResponse } from '@/lib/api/client';
+
+export function useBatchQuote(
+  requests: QuoteRequestItem[],
+  skip = false,
+  refreshIntervalMs?: number,
+): UseApiState<BatchQuoteResponse> & { refresh: () => void } {
+  return useFetch(
+    (signal) => stellarRouteClient.getQuotesBatch(requests, { signal }),
+    [JSON.stringify(requests)],
+    refreshIntervalMs,
+    skip || requests.length === 0,
   );
 }
 

@@ -1,12 +1,12 @@
 //! API server setup and configuration
 
-use axum::Router;
+use axum::{http::Request, Router};
 use sqlx::PgPool;
 use std::{net::SocketAddr, sync::Arc};
 use tower_http::{
     compression::CompressionLayer,
     cors::{Any, CorsLayer},
-    trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
+    trace::{DefaultOnResponse, TraceLayer},
 };
 use tracing::{info, warn, Level};
 use utoipa::OpenApi;
@@ -16,9 +16,12 @@ use crate::{
     cache::CacheManager,
     docs::ApiDoc,
     error::Result,
-    middleware::{EndpointConfig, RateLimitLayer},
+    middleware::{
+        api_versioning_layer, request_id_layer, EndpointConfig, RateLimitLayer, RequestId,
+        REQUEST_ID_HEADER,
+    },
     routes,
-    state::AppState,
+    state::{AppState, CachePolicy, DatabasePools},
 };
 
 /// API server configuration
@@ -34,6 +37,8 @@ pub struct ServerConfig {
     pub enable_compression: bool,
     /// Redis URL (optional)
     pub redis_url: Option<String>,
+    /// Quote cache TTL in seconds
+    pub quote_cache_ttl_seconds: u64,
 }
 
 impl Default for ServerConfig {
@@ -44,6 +49,7 @@ impl Default for ServerConfig {
             enable_cors: true,
             enable_compression: true,
             redis_url: None,
+            quote_cache_ttl_seconds: 2,
         }
     }
 }
@@ -56,7 +62,11 @@ pub struct Server {
 
 impl Server {
     /// Create a new API server
-    pub async fn new(config: ServerConfig, db: PgPool) -> Self {
+    pub async fn new(config: ServerConfig, db: DatabasePools) -> Self {
+        let cache_policy = CachePolicy {
+            quote_ttl: std::time::Duration::from_secs(config.quote_cache_ttl_seconds),
+        };
+
         // Try to connect to Redis if URL is provided
         let (state, rate_limit_layer) = if let Some(redis_url) = &config.redis_url {
             match CacheManager::new(redis_url).await {
@@ -81,12 +91,19 @@ impl Server {
                         }
                     };
 
-                    (Arc::new(AppState::with_cache(db, cache)), rate_limit)
+                    (
+                        Arc::new(AppState::with_cache_and_policy(
+                            db,
+                            cache,
+                            cache_policy.clone(),
+                        )),
+                        rate_limit,
+                    )
                 }
                 Err(e) => {
                     warn!("⚠️  Redis connection failed, running without cache: {}", e);
                     (
-                        Arc::new(AppState::new(db)),
+                        Arc::new(AppState::new_with_policy(db, cache_policy.clone())),
                         RateLimitLayer::in_memory(EndpointConfig::default()),
                     )
                 }
@@ -94,7 +111,7 @@ impl Server {
         } else {
             info!("ℹ️  Running without Redis cache");
             (
-                Arc::new(AppState::new(db)),
+                Arc::new(AppState::new_with_policy(db, cache_policy)),
                 RateLimitLayer::in_memory(EndpointConfig::default()),
             )
         };
@@ -135,12 +152,40 @@ impl Server {
         // Add rate limiting (innermost — runs before CORS/compression in the response path)
         app = app.layer(rate_limit);
 
-        // Add request logging — each request gets a unique span with method, URI, status, and latency
+        // Add request logging — each request gets a unique span with method, URI, status, and latency.
         app = app.layer(
             TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .make_span_with(|request: &Request<_>| {
+                    let request_id = request
+                        .extensions()
+                        .get::<RequestId>()
+                        .map(RequestId::as_str)
+                        .or_else(|| {
+                            request
+                                .headers()
+                                .get(REQUEST_ID_HEADER)
+                                .and_then(|value| value.to_str().ok())
+                        })
+                        .unwrap_or("missing");
+
+                    tracing::info_span!(
+                        "http.request",
+                        request_id = %request_id,
+                        http.method = %request.method(),
+                        http.target = %request.uri(),
+                        http.status_code = tracing::field::Empty,
+                        otel.kind = "server",
+                    )
+                })
                 .on_response(DefaultOnResponse::new().level(Level::INFO)),
         );
+
+        // Add request ID propagation as the outermost wrapper so downstream layers reuse the
+        // same correlation ID in logs, spans, and responses.
+        app = app.layer(axum::middleware::from_fn(request_id_layer));
+
+        // Add API lifecycle headers (Deprecation/Sunset/Link) for /api/v1 routes.
+        app = app.layer(axum::middleware::from_fn(api_versioning_layer));
 
         app
     }
@@ -154,7 +199,8 @@ impl Server {
         info!("🚀 StellarRoute API server starting on http://{}", addr);
         info!("📊 Health check: http://{}/health", addr);
         info!("📈 Trading pairs: http://{}/api/v1/pairs", addr);
-        info!("📚 API Documentation: http://{}/swagger-ui", addr);
+        info!("� Prometheus metrics: http://{}/metrics", addr);
+        info!("�📚 API Documentation: http://{}/swagger-ui", addr);
 
         let listener = tokio::net::TcpListener::bind(addr)
             .await

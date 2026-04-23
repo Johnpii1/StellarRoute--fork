@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { WalletButton } from "@/components/shared/wallet-button"
+//import { WalletButton } from "@/components/shared/WalletButton"
 import { NetworkBadge } from "@/components/shared/network-badge"
 import { MobileNav } from "./mobile-nav"
 import { cn } from "@/lib/utils"
@@ -90,14 +90,14 @@ export function Header() {
             <ThemeToggle />
           </div>
           <div className="hidden md:block">
-            <WalletButton />
+           {/* <WalletButton /> */}
           </div>
 
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden h-11 w-11 flex items-center justify-center"
             onClick={() => setMobileMenuOpen(true)}
             aria-label="Open mobile menu"
             aria-expanded={mobileMenuOpen}

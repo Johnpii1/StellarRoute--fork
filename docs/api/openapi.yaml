@@ -30,6 +30,18 @@ info:
 
     Endpoints are rate-limited per IP address.  When the limit is exceeded the
     API returns **429 Too Many Requests** with `X-RateLimit-*` headers.
+
+    ## Request correlation
+
+    Clients may optionally send `X-Request-ID` with any request. The API will
+    reuse that value, or generate a UUID when the header is omitted, and echo
+    the final request ID back in the `X-Request-ID` response header.
+
+    ## Versioning and deprecation
+
+    `/api/v1/*` is in deprecation mode. Responses from v1 routes include
+    `Deprecation`, `Sunset`, and `Link` headers. Breaking removals require a
+    notice period and migration guidance.
   contact:
     name: StellarRoute
     url: https://github.com/stellarroute/stellarroute
@@ -76,6 +88,8 @@ paths:
                 components:
                   database: healthy
                   redis: healthy
+                  horizon: healthy
+                  soroban_rpc: healthy
         "503":
           description: One or more dependencies unhealthy
           content:
@@ -87,24 +101,86 @@ paths:
                 timestamp: "2026-02-23T12:00:00Z"
                 version: "0.1.0"
                 components:
-                  database: unhealthy
+                  database: degraded
                   redis: healthy
+                  horizon: degraded
+                  soroban_rpc: healthy
+
+  /health/deps:
+    get:
+      operationId: dependency_health
+      summary: Dependency readiness check
+      description: |
+        Returns per-dependency readiness status for infrastructure and external
+        providers (PostgreSQL, Redis, Horizon, Soroban RPC).
+
+        Returns **200 OK** when dependencies are healthy.
+        Returns **503 Service Unavailable** when one or more are degraded.
+      tags:
+        - health
+      responses:
+        "200":
+          description: Dependencies healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DependenciesHealthResponse"
+              example:
+                status: ok
+                timestamp: "2026-02-23T12:00:00Z"
+                components:
+                  database: healthy
+                  redis: healthy
+                  horizon: healthy
+                  soroban_rpc: healthy
+        "503":
+          description: One or more dependencies degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DependenciesHealthResponse"
+              example:
+                status: degraded
+                timestamp: "2026-02-23T12:00:00Z"
+                components:
+                  database: healthy
+                  redis: healthy
+                  horizon: degraded
+                  soroban_rpc: degraded
 
   /api/v1/pairs:
     get:
       operationId: list_pairs
       summary: List trading pairs
       description: |
-        Returns all trading pairs that currently have active offers in the
-        SDEX orderbook, ordered by liquidity depth (most offers first).
+        Returns active trading pairs that currently have offers in the SDEX
+        orderbook.
 
-        Results are cached for **30 seconds**.  Up to **100** pairs are
-        returned per request.
+        Stable sort order:
+        1. `offer_count DESC`
+        2. `last_updated DESC`
+        3. Canonical asset fields ascending as deterministic tie-breakers
+
+        Pagination:
+        - Default page size: `25`
+        - Max page size: `100`
+        - `cursor` (preferred) or `offset` (fallback)
       tags:
         - trading
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+        - $ref: "#/components/parameters/PageOffset"
       responses:
         "200":
           description: List of active trading pairs
+          headers:
+            Deprecation:
+              $ref: "#/components/headers/DeprecationHeader"
+            Sunset:
+              $ref: "#/components/headers/SunsetHeader"
+            Link:
+              $ref: "#/components/headers/DeprecationLinkHeader"
           content:
             application/json:
               schema:
@@ -124,6 +200,18 @@ paths:
                     offer_count: 17
                     last_updated: "2026-02-23T11:58:30Z"
                 total: 2
+                limit: 25
+                next_cursor: "25"
+                prev_cursor: null
+        "400":
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: validation_error
+                message: Invalid cursor; expected a numeric offset
         "500":
           description: Internal server error
           content:
@@ -133,6 +221,46 @@ paths:
               example:
                 error: internal_error
                 message: Failed to fetch trading pairs
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/v1/markets:
+    get:
+      operationId: list_markets
+      summary: List markets
+      description: Alias of `/api/v1/pairs` with identical pagination and sorting.
+      tags:
+        - trading
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
+        - $ref: "#/components/parameters/PageOffset"
+      responses:
+        "200":
+          description: List of active markets
+          headers:
+            Deprecation:
+              $ref: "#/components/headers/DeprecationHeader"
+            Sunset:
+              $ref: "#/components/headers/SunsetHeader"
+            Link:
+              $ref: "#/components/headers/DeprecationLinkHeader"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PairsResponse"
+        "400":
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "429":
           $ref: "#/components/responses/RateLimited"
 
@@ -223,6 +351,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/BaseAsset"
         - $ref: "#/components/parameters/QuoteAsset"
+        - $ref: "#/components/parameters/RequestIdHeader"
         - name: amount
           in: query
           description: Amount of the base asset to trade (default `1`)
@@ -230,6 +359,14 @@ paths:
           schema:
             type: string
             example: "100"
+        - name: slippage_bps
+          in: query
+          description: Slippage tolerance in basis points (e.g. `50` = 0.50%). Max `10000` (100%).
+          required: false
+          schema:
+            type: integer
+            default: 50
+            example: 100
         - name: quote_type
           in: query
           description: |
@@ -244,6 +381,9 @@ paths:
       responses:
         "200":
           description: Best available price quote
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestIdHeader"
           content:
             application/json:
               schema:
@@ -291,6 +431,94 @@ paths:
               example:
                 error: not_found
                 message: No route found for this trading pair
+        "422":
+          description: Stale market data — all data sources are too old to provide a quote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: stale_market_data
+                message: All market data inputs are stale
+                details:
+                  stale_count: 5
+                  fresh_count: 0
+                  threshold_secs_sdex: 60
+                  threshold_secs_amm: 120
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/v1/route/{base}/{quote}:
+    get:
+      operationId: get_route
+      summary: Get trading route
+      deprecated: true
+      description: |
+        Returns only the optimal execution path and routing steps for trading
+        `amount` of the base asset for the quote asset.
+
+        Unlike the quote endpoint, this returns a simplified response without
+        detailed pricing breakdown or venue evaluations.
+
+        This legacy route is deprecated in favor of `/api/v1/routes/{base}/{quote}`.
+        Clients should watch the `Deprecation`, `Sunset`, and `Link` headers and
+        migrate using the guidance in `docs/api/versioning.md`.
+      tags:
+        - trading
+      parameters:
+        - $ref: "#/components/parameters/BaseAsset"
+        - $ref: "#/components/parameters/QuoteAsset"
+        - name: amount
+          in: query
+          description: Amount of the base asset to trade (default `1`)
+          required: false
+          schema:
+            type: string
+            example: "100"
+        - name: slippage_bps
+          in: query
+          description: Slippage tolerance in basis points (e.g. `50` = 0.50%). Max `10000` (100%).
+          required: false
+          schema:
+            type: integer
+            default: 50
+            example: 100
+        - name: quote_type
+          in: query
+          description: |
+            Direction of the quote:
+            - `sell` — how much quote asset you receive when **selling** `amount` of the base asset
+            - `buy`  — how much base asset you must spend to **buy** `amount` of the quote asset
+          required: false
+          schema:
+            type: string
+            enum: [sell, buy]
+            default: sell
+      responses:
+        "200":
+          description: Optimal trading route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteResponse"
+        "400":
+          description: Invalid parameters (bad asset format or invalid slippage)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No trading route found for this pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
           content:
@@ -302,6 +530,14 @@ paths:
 
 components:
   parameters:
+    RequestIdHeader:
+      name: X-Request-ID
+      in: header
+      required: false
+      description: Optional client-supplied correlation ID echoed back by the API.
+      schema:
+        type: string
+        example: support-ticket-42
     BaseAsset:
       name: base
       in: path
@@ -326,6 +562,33 @@ components:
       schema:
         type: string
         example: USDC
+    PageLimit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. Default 25, max 100.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    PageCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Cursor for the next page (numeric offset token).
+      schema:
+        type: string
+        example: "25"
+    PageOffset:
+      name: offset
+      in: query
+      required: false
+      description: Offset fallback for pagination when cursor is not used.
+      schema:
+        type: integer
+        minimum: 0
+        example: 50
 
   responses:
     RateLimited:
@@ -350,6 +613,28 @@ components:
           example:
             error: rate_limit_exceeded
             message: Too many requests — please slow down
+
+  headers:
+    RequestIdHeader:
+      description: Correlation ID for the request. Echoes the client-provided value or a server-generated UUID.
+      schema:
+        type: string
+        example: 6b20dc6f-0cab-4f3f-b4eb-4638dbfd0f9d
+    DeprecationHeader:
+      description: Indicates that the endpoint version is deprecated.
+      schema:
+        type: string
+        example: "true"
+    SunsetHeader:
+      description: RFC 7231 IMF-fixdate indicating planned v1 sunset.
+      schema:
+        type: string
+        example: "Wed, 31 Dec 2026 23:59:59 GMT"
+    DeprecationLinkHeader:
+      description: Link to migration guidance for deprecated v1 routes.
+      schema:
+        type: string
+        example: "</docs/api/v1-migration-guide>; rel=\"deprecation\""
 
   schemas:
     HealthResponse:
@@ -379,6 +664,31 @@ components:
           example:
             database: healthy
             redis: not_configured
+            horizon: not_configured
+            soroban_rpc: not_configured
+
+    DependenciesHealthResponse:
+      type: object
+      required: [status, timestamp, components]
+      description: Dependency-only health status for readiness checks
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-02-23T12:00:00Z"
+        components:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            database: healthy
+            redis: healthy
+            horizon: healthy
+            soroban_rpc: degraded
 
     AssetInfo:
       type: object
@@ -445,8 +755,23 @@ components:
             $ref: "#/components/schemas/TradingPair"
         total:
           type: integer
-          description: Total number of pairs returned
+          description: Total number of pairs available across all pages
           example: 2
+        limit:
+          type: integer
+          nullable: true
+          description: Effective page size used for this response
+          example: 25
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor token for the next page, if any
+          example: "25"
+        prev_cursor:
+          type: string
+          nullable: true
+          description: Cursor token for the previous page, if any
+          example: "0"
 
     OrderbookLevel:
       type: object
@@ -549,33 +874,55 @@ components:
           description: Unix timestamp when the quote was generated
           example: 1740312000
 
+    RouteResponse:
+      type: object
+      required: [base_asset, quote_asset, amount, path, slippage_bps, timestamp]
+      description: Optimal trading route without pricing details
+      properties:
+        base_asset:
+          $ref: "#/components/schemas/AssetInfo"
+        quote_asset:
+          $ref: "#/components/schemas/AssetInfo"
+        amount:
+          type: string
+          description: Amount of base asset being traded
+          example: "100.0000000"
+        path:
+          type: array
+          description: List of execution steps
+          items:
+            $ref: "#/components/schemas/PathStep"
+        slippage_bps:
+          type: integer
+          description: Slippage tolerance in basis points
+          example: 50
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp of the route calculation
+          example: 1740312000
+
     ErrorResponse:
       type: object
       required: [error, message]
-      description: |
-        Standard error envelope.
-
-        ## Error codes
-
-        | `error` | HTTP status | Meaning |
-        |---------|-------------|---------|
-        | `invalid_asset` | 400 | Asset identifier could not be parsed |
-        | `validation_error` | 400 | Request parameter failed validation |
-        | `not_found` | 404 | Requested resource does not exist |
-        | `rate_limit_exceeded` | 429 | Too many requests from this IP |
-        | `internal_error` | 500 | Unexpected server-side failure |
+      description: Standard API error format
       properties:
         error:
           type: string
           description: Machine-readable error code
-          example: not_found
+          example: validation_error
         message:
           type: string
           description: Human-readable error description
-          example: Asset not found in orderbook
+          example: "Amount must be greater than zero"
         details:
-          description: Optional structured context (present on validation errors)
+          type: object
           nullable: true
+          description: Optional structured context about the error
+          example:
+            parameter: slippage_bps
+            min: 0
+            max: 10000
 
   # Authentication is planned for a future release.
   # securitySchemes:

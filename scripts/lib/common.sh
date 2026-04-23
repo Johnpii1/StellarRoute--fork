@@ -14,6 +14,8 @@ WASM_FILE="${WASM_TARGET_DIR}/stellarroute_contracts.wasm"
 LOG_DIR="${REPO_ROOT}/logs"
 NETWORK=""
 IDENTITY="deployer"
+DRY_RUN=false
+DEFAULT_NETWORK="${STELLAR_NETWORK:-testnet}"
 
 # ── Logging ───────────────────────────────────────────────────────────
 
@@ -32,6 +34,14 @@ parse_network_flag() {
                 NETWORK="$2"
                 shift 2
                 ;;
+            --identity)
+                IDENTITY="$2"
+                shift 2
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
             *)
                 shift
                 ;;
@@ -39,8 +49,7 @@ parse_network_flag() {
     done
 
     if [[ -z "${NETWORK}" ]]; then
-        log_error "Missing required flag: --network (testnet|mainnet)"
-        exit 1
+        NETWORK="${DEFAULT_NETWORK}"
     fi
 
     if [[ "${NETWORK}" != "testnet" && "${NETWORK}" != "mainnet" ]]; then
@@ -64,22 +73,34 @@ deployment_file() {
 }
 
 get_contract_id() {
+    get_named_contract_id "router"
+}
+
+get_named_contract_id() {
+    local contract_name="$1"
     local file
     file="$(deployment_file)"
     if [[ ! -f "${file}" ]]; then
         log_error "No deployment artifact found at ${file}. Run deploy.sh first."
         exit 1
     fi
-    jq -r '.contract_id' "${file}"
+    local id
+    id="$(jq -r ".contracts.${contract_name}.contract_id // .contract_id // empty" "${file}")"
+    if [[ -z "${id}" || "${id}" == "null" ]]; then
+        log_error "No deployment record for '${contract_name}' found in ${file}."
+        exit 1
+    fi
+    echo "${id}"
 }
 
 save_deployment() {
-    local contract_id="$1"
+    local contract_json="$1"
     local file
     file="$(deployment_file)"
     cat > "${file}" <<ARTIFACT
 {
-  "contract_id": "${contract_id}",
+  "contract_id": "$(echo "${contract_json}" | jq -r '.router.contract_id // empty')",
+  "contracts": ${contract_json},
   "network": "${NETWORK}",
   "rpc_url": "$(get_rpc_url)",
   "deployed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
@@ -107,9 +128,17 @@ soroban_cmd() {
     fi
 }
 
+run_cmd() {
+    if [[ "${DRY_RUN}" == "true" ]]; then
+        log_info "[DRY-RUN] $*"
+        return 0
+    fi
+    "$@"
+}
+
 configure_network() {
     log_info "Configuring network: ${NETWORK}"
-    soroban_cmd network add "${NETWORK}" \
+    run_cmd soroban_cmd network add "${NETWORK}" \
         --rpc-url "$(get_rpc_url)" \
         --network-passphrase "$(get_network_passphrase)" 2>/dev/null || true
 }
@@ -132,6 +161,13 @@ build_wasm() {
     cargo build --manifest-path "${CONTRACTS_DIR}/Cargo.toml" \
         --target wasm32-unknown-unknown --release
     log_ok "WASM build complete: ${WASM_FILE}"
+}
+
+trap_with_context() {
+    local line="$1"
+    local exit_code="$2"
+    log_error "Command failed (line ${line}) with exit code ${exit_code}"
+    exit "${exit_code}"
 }
 
 optimize_wasm() {

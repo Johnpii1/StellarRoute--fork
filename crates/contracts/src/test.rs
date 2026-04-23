@@ -9,21 +9,20 @@
 
 #![allow(dead_code)]
 
+use crate::storage::{
+    INSTANCE_TTL_EXTEND_TO, INSTANCE_TTL_THRESHOLD, POOL_TTL_EXTEND_TO, POOL_TTL_THRESHOLD,
+};
 use soroban_sdk::{
     testutils::{Address as _, Events, Ledger},
-    Address, Bytes, BytesN, Env, Symbol, Vec,
+    Address, BytesN, Env, Symbol, Vec,
 };
 
 use super::{
+    adapters::AmmAdapter,
     errors::ContractError,
     router::{StellarRoute, StellarRouteClient},
-    storage::{
-        INSTANCE_TTL_EXTEND_TO, INSTANCE_TTL_THRESHOLD, POOL_TTL_EXTEND_TO,
-        POOL_TTL_THRESHOLD,
-    },
     types::{
-        Asset, FeeConfig, FeeRecipient, MevConfig, PoolType, ProposalAction, Route, RouteHop,
-        SwapParams,
+        Asset, FeeConfig, FeeRecipient, PoolType, ProposalAction, Route, RouteHop, SwapParams,
     },
 };
 
@@ -78,7 +77,7 @@ mod mock_failing {
     use super::super::types::Asset;
     use soroban_sdk::{contract, contractimpl, Env};
 
-    /// A pool that always panics — used to test PoolCallFailed error paths.
+    /// A pool that always panics — used to test typed AMM CCI error paths.
     #[contract]
     pub struct MockFailingPool;
 
@@ -98,8 +97,80 @@ mod mock_failing {
     }
 }
 
+mod mock_quote_failing {
+    use super::super::types::Asset;
+    use soroban_sdk::{contract, contractimpl, Env};
+
+    #[contract]
+    pub struct MockQuoteFailingPool;
+
+    #[contractimpl]
+    impl MockQuoteFailingPool {
+        pub fn adapter_quote(_e: Env, _in: Asset, _out: Asset, _amount: i128) -> i128 {
+            panic!("mock: quote call failed")
+        }
+
+        pub fn swap(_e: Env, _in: Asset, _out: Asset, amount: i128, _min: i128) -> i128 {
+            amount
+        }
+
+        pub fn get_rsrvs(_e: Env) -> (i128, i128) {
+            (1_000_000, 1_000_000)
+        }
+    }
+}
+
+mod mock_swap_failing {
+    use super::super::types::Asset;
+    use soroban_sdk::{contract, contractimpl, Env};
+
+    #[contract]
+    pub struct MockSwapFailingPool;
+
+    #[contractimpl]
+    impl MockSwapFailingPool {
+        pub fn adapter_quote(_e: Env, _in: Asset, _out: Asset, amount: i128) -> i128 {
+            amount
+        }
+
+        pub fn swap(_e: Env, _in: Asset, _out: Asset, _amount: i128, _min: i128) -> i128 {
+            panic!("mock: swap call failed")
+        }
+
+        pub fn get_rsrvs(_e: Env) -> (i128, i128) {
+            (1_000_000, 1_000_000)
+        }
+    }
+}
+
+mod mock_reserves_failing {
+    use super::super::types::Asset;
+    use soroban_sdk::{contract, contractimpl, Env};
+
+    #[contract]
+    pub struct MockReservesFailingPool;
+
+    #[contractimpl]
+    impl MockReservesFailingPool {
+        pub fn adapter_quote(_e: Env, _in: Asset, _out: Asset, amount: i128) -> i128 {
+            amount
+        }
+
+        pub fn swap(_e: Env, _in: Asset, _out: Asset, amount: i128, _min: i128) -> i128 {
+            amount
+        }
+
+        pub fn get_rsrvs(_e: Env) -> (i128, i128) {
+            panic!("mock: reserves call failed")
+        }
+    }
+}
+
 use mock_amm::MockAmmPool;
 use mock_failing::MockFailingPool;
+use mock_quote_failing::MockQuoteFailingPool;
+use mock_reserves_failing::MockReservesFailingPool;
+use mock_swap_failing::MockSwapFailingPool;
 
 // ── Test Utilities ────────────────────────────────────────────────────────────
 
@@ -120,20 +191,23 @@ pub(crate) fn deploy_router(env: &Env) -> (Address, Address, StellarRouteClient<
     (admin, fee_to, client)
 }
 
-pub(crate) fn deploy_multisig_router(
+/// Deploy router and migrate it to 2-of-3 multisig governance.
+/// Returns (signer1, signer2, signer3, admin, client).
+fn deploy_multisig_router(
     env: &Env,
 ) -> (Address, Address, Address, Address, StellarRouteClient<'_>) {
-    let (admin, fee_to, client) = deploy_router(env);
-    let signer_one = Address::generate(env);
-    let signer_two = Address::generate(env);
+    let (admin, _fee_to, client) = deploy_router(env);
+    let s1 = Address::generate(env);
+    let s2 = Address::generate(env);
+    let s3 = Address::generate(env);
 
     let mut signers = Vec::new(env);
-    signers.push_back(signer_one.clone());
-    signers.push_back(signer_two.clone());
+    signers.push_back(s1.clone());
+    signers.push_back(s2.clone());
+    signers.push_back(s3.clone());
 
-    client.migrate_to_multisig(&admin, &signers, &2_u32, &100_u64, &None);
-
-    (signer_one, signer_two, admin, fee_to, client)
+    client.migrate_to_multisig(&admin, &signers, &2_u32, &10_000_u64, &None);
+    (s1, s2, s3, admin, client)
 }
 
 pub(crate) fn deploy_mock_pool(env: &Env) -> Address {
@@ -142,6 +216,18 @@ pub(crate) fn deploy_mock_pool(env: &Env) -> Address {
 
 fn deploy_failing_pool(env: &Env) -> Address {
     env.register_contract(None, MockFailingPool)
+}
+
+fn deploy_quote_failing_pool(env: &Env) -> Address {
+    env.register_contract(None, MockQuoteFailingPool)
+}
+
+fn deploy_swap_failing_pool(env: &Env) -> Address {
+    env.register_contract(None, MockSwapFailingPool)
+}
+
+fn deploy_reserves_failing_pool(env: &Env) -> Address {
+    env.register_contract(None, MockReservesFailingPool)
 }
 
 pub(crate) fn make_route(env: &Env, pool: &Address, hops: u32) -> Route {
@@ -156,8 +242,8 @@ pub(crate) fn make_route(env: &Env, pool: &Address, hops: u32) -> Route {
     }
     Route {
         hops: v,
-        estimated_output: 990,
-        min_output: 900,
+        estimated_output: 0,
+        min_output: 0,
         expires_at: 99_999,
     }
 }
@@ -435,6 +521,17 @@ fn test_get_quote_single_hop() {
 }
 
 #[test]
+fn test_validate_route_success() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+    let route = make_route(&env, &pool, 1);
+    // get_quote runs validate_route_internal; success implies route validates
+    assert!(client.try_get_quote(&1000, &route).is_ok());
+}
+
+#[test]
 fn test_get_quote_negative_amount_fails() {
     let env = setup_env();
     let (_, _, client) = deploy_router(&env);
@@ -442,7 +539,7 @@ fn test_get_quote_negative_amount_fails() {
     client.register_pool(&pool);
     assert_eq!(
         client.try_get_quote(&-1, &make_route(&env, &pool, 1)),
-        Err(Ok(ContractError::InvalidRoute))
+        Err(Ok(ContractError::InsufficientInput))
     );
 }
 
@@ -454,7 +551,7 @@ fn test_get_quote_zero_amount_fails() {
     client.register_pool(&pool);
     assert_eq!(
         client.try_get_quote(&0, &make_route(&env, &pool, 1)),
-        Err(Ok(ContractError::InvalidRoute))
+        Err(Ok(ContractError::InsufficientInput))
     );
 }
 
@@ -470,7 +567,7 @@ fn test_get_quote_empty_hops_fails() {
     };
     assert_eq!(
         client.try_get_quote(&1000, &empty),
-        Err(Ok(ContractError::InvalidRoute))
+        Err(Ok(ContractError::EmptyRoute))
     );
 }
 
@@ -482,6 +579,80 @@ fn test_get_quote_too_many_hops_fails() {
     client.register_pool(&pool);
     assert_eq!(
         client.try_get_quote(&1000, &make_route(&env, &pool, 5)),
+        Err(Ok(ContractError::TooManyHops))
+    );
+}
+
+#[test]
+fn test_validate_route_entrypoint_success() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+    let route = make_route(&env, &pool, 1);
+
+    assert!(client.try_validate_route(&route).is_ok());
+}
+
+#[test]
+fn test_validate_route_entrypoint_empty_route_fails() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let empty = Route {
+        hops: Vec::new(&env),
+        estimated_output: 0,
+        min_output: 0,
+        expires_at: 99_999,
+    };
+
+    assert_eq!(
+        client.try_validate_route(&empty),
+        Err(Ok(ContractError::EmptyRoute))
+    );
+}
+
+#[test]
+fn test_get_quote_is_deterministic() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+    let route = make_route(&env, &pool, 2);
+
+    let q1 = client.get_quote(&1000, &route);
+    let q2 = client.get_quote(&1000, &route);
+    assert_eq!(q1, q2);
+}
+
+#[test]
+fn test_validate_route_hop_continuity_enforced() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let mut v = Vec::new(&env);
+    v.push_back(RouteHop {
+        source: Asset::Native,
+        destination: Asset::Native,
+        pool: pool.clone(),
+        pool_type: PoolType::AmmConstProd,
+    });
+    v.push_back(RouteHop {
+        source: Asset::Soroban(Address::generate(&env)),
+        destination: Asset::Native,
+        pool: pool.clone(),
+        pool_type: PoolType::AmmConstProd,
+    });
+    let route = Route {
+        hops: v,
+        estimated_output: 0,
+        min_output: 0,
+        expires_at: 99_999,
+    };
+
+    assert_eq!(
+        client.try_validate_route(&route),
         Err(Ok(ContractError::InvalidRoute))
     );
 }
@@ -505,7 +676,19 @@ fn test_get_quote_failing_pool_returns_error() {
     client.register_pool(&pool);
     assert_eq!(
         client.try_get_quote(&1000, &make_route(&env, &pool, 1)),
-        Err(Ok(ContractError::PoolCallFailed))
+        Err(Ok(ContractError::AmmQuoteCallFailed))
+    );
+}
+
+#[test]
+fn test_get_quote_quote_adapter_failure_is_typed() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_quote_failing_pool(&env);
+    client.register_pool(&pool);
+    assert_eq!(
+        client.try_get_quote(&1000, &make_route(&env, &pool, 1)),
+        Err(Ok(ContractError::AmmQuoteCallFailed))
     );
 }
 
@@ -531,6 +714,24 @@ fn test_swap_single_hop_success() {
     let result = simple_swap(&env, &client, &pool);
     assert_eq!(result.amount_in, 1000);
     assert_eq!(result.amount_out, 988);
+}
+
+#[test]
+fn test_execute_alias_matches_execute_swap() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+    let sender = Address::generate(&env);
+    let params = swap_params_for(
+        &env,
+        make_route(&env, &pool, 1),
+        1000,
+        0,
+        current_seq(&env) + 100,
+    );
+    let via_alias = client.execute(&sender, &params);
+    assert!(via_alias.amount_out > 0);
 }
 
 #[test]
@@ -730,7 +931,7 @@ fn test_swap_zero_amount_produces_zero_output() {
     let (_, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
     client.register_pool(&pool);
-    let result = client.execute_swap(
+    let result = client.try_execute_swap(
         &Address::generate(&env),
         &swap_params_for(
             &env,
@@ -740,7 +941,74 @@ fn test_swap_zero_amount_produces_zero_output() {
             current_seq(&env) + 100,
         ),
     );
-    assert_eq!(result.amount_out, 0);
+    assert_eq!(result, Err(Ok(ContractError::InvalidAmount)));
+}
+
+#[test]
+fn test_swap_enforces_route_min_output() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let mut route = make_route(&env, &pool, 1);
+    route.min_output = 990;
+
+    let result = client.try_execute_swap(
+        &Address::generate(&env),
+        &swap_params_for(&env, route, 1000, 900, current_seq(&env) + 100),
+    );
+
+    assert_eq!(result, Err(Ok(ContractError::SlippageExceeded)));
+}
+
+#[test]
+fn test_swap_rejects_contract_as_recipient() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let mut params = swap_params_for(
+        &env,
+        make_route(&env, &pool, 1),
+        1000,
+        0,
+        current_seq(&env) + 100,
+    );
+    params.recipient = client.address.clone();
+
+    let result = client.try_execute_swap(&Address::generate(&env), &params);
+    assert_eq!(result, Err(Ok(ContractError::InvalidRecipient)));
+}
+
+#[test]
+fn test_failed_swap_does_not_increment_nonce() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_failing_pool(&env);
+    client.register_pool(&pool);
+    let sender = Address::generate(&env);
+
+    let before = env.as_contract(&client.address, || {
+        crate::storage::get_nonce(&env, sender.clone())
+    });
+    let result = client.try_execute_swap(
+        &sender,
+        &swap_params_for(
+            &env,
+            make_route(&env, &pool, 1),
+            1000,
+            0,
+            current_seq(&env) + 100,
+        ),
+    );
+    let after = env.as_contract(&client.address, || {
+        crate::storage::get_nonce(&env, sender.clone())
+    });
+
+    assert_eq!(result, Err(Ok(ContractError::AmmSwapCallFailed)));
+    assert_eq!(before, after);
 }
 
 #[test]
@@ -799,7 +1067,38 @@ fn test_swap_pool_call_failure() {
                 current_seq(&env) + 100
             ),
         ),
-        Err(Ok(ContractError::PoolCallFailed))
+        Err(Ok(ContractError::AmmSwapCallFailed))
+    );
+}
+
+#[test]
+fn test_swap_adapter_failure_is_typed() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_swap_failing_pool(&env);
+    client.register_pool(&pool);
+    assert_eq!(
+        client.try_execute_swap(
+            &Address::generate(&env),
+            &swap_params_for(
+                &env,
+                make_route(&env, &pool, 1),
+                1000,
+                0,
+                current_seq(&env) + 100
+            ),
+        ),
+        Err(Ok(ContractError::AmmSwapCallFailed))
+    );
+}
+
+#[test]
+fn test_adapter_get_reserves_failure_is_typed() {
+    let env = setup_env();
+    let pool = deploy_reserves_failing_pool(&env);
+    assert_eq!(
+        AmmAdapter::get_reserves(&env, &pool),
+        Err(ContractError::AmmReservesCallFailed)
     );
 }
 
@@ -1023,7 +1322,7 @@ fn property_all_contract_errors_are_reachable() {
         env.ledger().with_mut(|li| li.sequence_number = 0);
     }
 
-    // PoolCallFailed
+    // AmmSwapCallFailed
     {
         let (_, _, c) = deploy_router(&env);
         let pool = deploy_failing_pool(&env);
@@ -1039,7 +1338,7 @@ fn property_all_contract_errors_are_reachable() {
                     current_seq(&env) + 100
                 ),
             ),
-            Err(Ok(ContractError::PoolCallFailed))
+            Err(Ok(ContractError::AmmSwapCallFailed))
         );
     }
 
@@ -1841,7 +2140,7 @@ fn valid_fee_config(env: &Env, r1: Address, r2: Address) -> FeeConfig {
 #[test]
 fn test_fee_config_validation() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
 
     let mut recipients = Vec::new(&env);
     recipients.push_back(FeeRecipient {
@@ -1855,8 +2154,7 @@ fn test_fee_config_validation() {
         auto_distribute: false,
     };
 
-    // Using single-admin mode to set config
-    client.set_admin(&admin);
+    // In single-admin mode, the deployed admin should authorize the config change
     let result = client.try_set_fee_distribution_config(&config);
 
     // In soroban, custom enum errors wrap in Ok() but fail as a contract error

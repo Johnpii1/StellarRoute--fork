@@ -18,7 +18,10 @@ reqwest.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 
-# Add SDK-specific dependencies here
+# SDK-specific dependencies
+clap = { version = "4.5", features = ["derive", "env"] }
 
 [dev-dependencies]
-tokio-test = "0.4"
+wiremock = "0.6"
+tokio = { version = "1", features = ["full"] }
+insta = "1.41"

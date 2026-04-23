@@ -28,18 +28,33 @@ serde_json = "1.0"
 anyhow = "1.0"
 thiserror = "1.0"
 
-# Logging
+# Logging and distributed tracing
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-opentelemetry = "0.22"
+opentelemetry = "0.21"
+opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.14", features = ["tonic"] }
+opentelemetry-http = "0.10"
 
 # HTTP/API
 reqwest = { version = "0.11", features = ["json"] }
 axum = { version = "0.7", features = ["macros", "ws"] }
 tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "compression-gzip", "trace"] }
+tower-http = { version = "0.5", features = [
+    "cors",
+    "compression-gzip",
+    "trace",
+] }
 
 # Database
-sqlx = { version = "0.8", features = ["runtime-tokio-native-tls", "postgres", "chrono", "uuid"] }
+sqlx = { version = "0.8", features = [
+    "runtime-tokio-native-tls",
+    "postgres",
+    "chrono",
+    "uuid",
+    "rust_decimal",
+] }
 
 # Time
 chrono = { version = "0.4", features = ["serde"] }
@@ -52,6 +67,13 @@ config = "0.13"
 
 # Caching
 redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# Concurrency utilities
+parking_lot = "0.12"
+arc-swap = "1.7"
+dashmap = "5.5"
+rand = "0.8"
+proptest = "1.5"
 
 # Clippy and formatting
 [workspace.lints.clippy]

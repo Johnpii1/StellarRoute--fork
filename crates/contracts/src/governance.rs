@@ -71,7 +71,9 @@ fn dispatch_action(e: &Env, action: ProposalAction) -> Result<(), ContractError>
             // Validate shares sum to exactly 10000 bps (100%)
             let mut total_bps: u32 = 0;
             for recipient in config.recipients.iter() {
-                total_bps += recipient.share_bps;
+                total_bps = total_bps
+                    .checked_add(recipient.share_bps)
+                    .ok_or(ContractError::InvalidFeeConfig)?;
             }
             if total_bps != 10000 {
                 return Err(ContractError::InvalidFeeConfig);
@@ -83,7 +85,9 @@ fn dispatch_action(e: &Env, action: ProposalAction) -> Result<(), ContractError>
             let key = StorageKey::SupportedPool(pool.clone());
             e.storage().persistent().set(&key, &true);
             e.storage().persistent().extend_ttl(&key, 17280, 17280 * 30);
-            let new_count = storage::get_pool_count(e) + 1;
+            let new_count = storage::get_pool_count(e)
+                .checked_add(1)
+                .unwrap_or_else(|| panic!("pool count overflow"));
             storage::set_pool_count(e, new_count);
             events::pool_registered(e, pool);
         }
@@ -92,7 +96,7 @@ fn dispatch_action(e: &Env, action: ProposalAction) -> Result<(), ContractError>
             e.storage().persistent().remove(&key);
             let count = storage::get_pool_count(e);
             if count > 0 {
-                storage::set_pool_count(e, count - 1);
+                storage::set_pool_count(e, count.saturating_sub(1));
             }
         }
         ProposalAction::Pause => {
@@ -162,6 +166,25 @@ pub fn init_governance(
     if signers.len() > MAX_SIGNERS {
         return Err(ContractError::SignerLimitReached);
     }
+    // A zero TTL makes every proposal immediately expired on creation.
+    if proposal_ttl == 0 {
+        return Err(ContractError::InvalidAmount);
+    }
+    // Reject duplicate signers.
+    for i in 0..signers.len() {
+        for j in (i + 1)..signers.len() {
+            if signers.get(i).unwrap() == signers.get(j).unwrap() {
+                return Err(ContractError::InvalidAmount);
+            }
+        }
+    }
+    // Reject the contract itself as a signer.
+    let contract = e.current_contract_address();
+    for i in 0..signers.len() {
+        if signers.get(i).unwrap() == contract {
+            return Err(ContractError::InvalidRecipient);
+        }
+    }
 
     let config = GovernanceConfig {
         signers,
@@ -224,7 +247,7 @@ pub fn propose(e: &Env, signer: Address, action: ProposalAction) -> Result<u64, 
         proposer: signer.clone(),
         approvals,
         created_at: now,
-        expires_at: now + config.proposal_ttl,
+        expires_at: now.saturating_add(config.proposal_ttl),
         executed: false,
     };
     storage::save_proposal(e, &proposal);

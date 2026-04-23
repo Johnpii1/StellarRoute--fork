@@ -1,50 +1,107 @@
-"use client"
+"use client";
 
-import { Wallet } from "lucide-react"
+import { useWallet } from "@/hooks/useWallet";
 
-import { Button } from "@/components/ui/button"
-import { useWallet } from "@/components/providers/wallet-provider"
+const APP_NETWORK = "TESTNET";
 
-/**
- * Formats a Stellar address for display
- * Shows first 4 and last 4 characters with ellipsis
- */
-function formatAddress(address: string): string {
-  if (address.length <= 12) return address
-  return `${address.slice(0, 4)}...${address.slice(-4)}`
-}
-
-/**
- * Wallet connect button component
- *
- * Displays "Connect Wallet" when disconnected or truncated address when connected
- */
 export function WalletButton() {
-  const { address, isConnected, connect, disconnect } = useWallet()
+  const {
+    session,
+    availableWallets,
+    loading,
+    error,
+    shortAddress,
+    connect,
+    disconnect,
+    copyAddress,
+  } = useWallet();
 
-  if (isConnected && address) {
+  const mismatch =
+    session.network &&
+    session.network.toUpperCase() !== APP_NETWORK.toUpperCase();
+
+  if (!session.isConnected) {
     return (
-      <Button
-        variant="outline"
-        onClick={disconnect}
-        className="gap-2"
-        aria-label="Disconnect wallet"
-      >
-        <Wallet className="h-4 w-4" />
-        <span className="hidden sm:inline">{formatAddress(address)}</span>
-        <span className="sm:hidden">{formatAddress(address)}</span>
-      </Button>
-    )
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          {availableWallets.length > 0 ? (
+            availableWallets.map((wallet) => (
+              <button
+                key={wallet.id}
+                onClick={() => connect(wallet.id)}
+                disabled={loading}
+                className="rounded-md border px-3 py-2 text-sm"
+              >
+                {loading ? "Connecting..." : `Connect ${wallet.label}`}
+              </button>
+            ))
+          ) : (
+            <div className="text-sm">
+              No supported wallet found. Install Freighter or xBull.
+            </div>
+          )}
+        </div>
+
+        {availableWallets.length === 0 && (
+          <div className="text-xs">
+            <a
+              href="https://www.freighter.app/"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Install Freighter
+            </a>{" "}
+            |{" "}
+            <a
+              href="https://wallet.xbull.app/"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Install xBull
+            </a>
+          </div>
+        )}
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
+      </div>
+    );
   }
 
   return (
-    <Button
-      onClick={connect}
-      className="gap-2"
-      aria-label="Connect wallet"
-    >
-      <Wallet className="h-4 w-4" />
-      <span>Connect Wallet</span>
-    </Button>
-  )
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <span className="rounded-md border px-3 py-2 text-sm">
+          {shortAddress}
+        </span>
+
+        <button
+          onClick={copyAddress}
+          className="rounded-md border px-3 py-2 text-sm"
+        >
+          Copy
+        </button>
+
+        <button
+          onClick={disconnect}
+          className="rounded-md border px-3 py-2 text-sm"
+        >
+          Disconnect
+        </button>
+      </div>
+
+      <div className="text-sm">
+        Wallet network: {session.network ?? "Unknown"}
+      </div>
+
+      {mismatch && (
+        <div className="text-sm text-yellow-600">
+          Network mismatch: app is {APP_NETWORK}, wallet is {session.network}
+        </div>
+      )}
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+    </div>
+  );
 }

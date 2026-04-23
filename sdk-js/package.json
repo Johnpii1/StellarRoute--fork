@@ -1,0 +1,62 @@
+{
+  "name": "@stellarroute/sdk-js",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for StellarRoute API",
+  "license": "MIT",
+  "author": "StellarRoute Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stellarroute/stellarroute"
+  },
+  "keywords": [
+    "stellar",
+    "dex",
+    "sdk",
+    "soroban",
+    "defi"
+  ],
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.build.json --outDir dist/esm",
+    "build:cjs": "tsc -p tsconfig.build.cjs.json --outDir dist/cjs",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "docs:api": "typedoc",
+    "examples:typecheck": "tsc --noEmit -p examples/tsconfig.json",
+    "verify": "npm run build && npm run test && npm run examples:typecheck",
+    "prepublishOnly": "npm run verify"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "typedoc": "^0.28.14",
+    "typedoc-plugin-markdown": "^4.9.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

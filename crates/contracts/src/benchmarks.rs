@@ -1,5 +1,3 @@
-#![cfg(test)]
-
 use crate::router::{StellarRoute, StellarRouteClient};
 use crate::types::SwapParams;
 use soroban_sdk::{testutils::Address as _, Address};
@@ -25,7 +23,7 @@ fn bench_initialize() {
 #[test]
 fn bench_register_pool() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
 
     env.mock_all_auths();
@@ -40,7 +38,7 @@ fn bench_register_pool() {
 #[test]
 fn bench_get_quote_1_hop() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
 
     env.mock_all_auths();
@@ -52,13 +50,17 @@ fn bench_get_quote_1_hop() {
     let _ = client.get_quote(&1_000_000, &route);
 
     let cpu_cost = env.budget().cpu_instruction_cost();
-    assert!(cpu_cost < 15_000_000, "get_quote (1 hop) CPU cost: {}", cpu_cost);
+    assert!(
+        cpu_cost < 15_000_000,
+        "get_quote (1 hop) CPU cost: {}",
+        cpu_cost
+    );
 }
 
 #[test]
 fn bench_get_quote_2_hops() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
 
     env.mock_all_auths();
@@ -70,13 +72,17 @@ fn bench_get_quote_2_hops() {
     let _ = client.get_quote(&1_000_000, &route);
 
     let cpu_cost = env.budget().cpu_instruction_cost();
-    assert!(cpu_cost < 25_000_000, "get_quote (2 hops) CPU cost: {}", cpu_cost);
+    assert!(
+        cpu_cost < 25_000_000,
+        "get_quote (2 hops) CPU cost: {}",
+        cpu_cost
+    );
 }
 
 #[test]
 fn bench_get_quote_4_hops() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
 
     env.mock_all_auths();
@@ -88,13 +94,17 @@ fn bench_get_quote_4_hops() {
     let _ = client.get_quote(&1_000_000, &route);
 
     let cpu_cost = env.budget().cpu_instruction_cost();
-    assert!(cpu_cost < 50_000_000, "get_quote (4 hops) CPU cost: {}", cpu_cost);
+    assert!(
+        cpu_cost < 50_000_000,
+        "get_quote (4 hops) CPU cost: {}",
+        cpu_cost
+    );
 }
 
 #[test]
 fn bench_execute_swap_1_hop() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
     let sender = Address::generate(&env);
 
@@ -117,13 +127,17 @@ fn bench_execute_swap_1_hop() {
     let _ = client.execute_swap(&sender, &params);
 
     let cpu_cost = env.budget().cpu_instruction_cost();
-    assert!(cpu_cost < 20_000_000, "execute_swap (1 hop) CPU cost: {}", cpu_cost);
+    assert!(
+        cpu_cost < 20_000_000,
+        "execute_swap (1 hop) CPU cost: {}",
+        cpu_cost
+    );
 }
 
 #[test]
 fn bench_execute_swap_4_hops() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
     let sender = Address::generate(&env);
 
@@ -146,7 +160,11 @@ fn bench_execute_swap_4_hops() {
     let _ = client.execute_swap(&sender, &params);
 
     let cpu_cost = env.budget().cpu_instruction_cost();
-    assert!(cpu_cost < 80_000_000, "execute_swap (4 hops) CPU cost: {}", cpu_cost);
+    assert!(
+        cpu_cost < 80_000_000,
+        "execute_swap (4 hops) CPU cost: {}",
+        cpu_cost
+    );
 }
 
 #[test]
@@ -164,14 +182,18 @@ fn bench_estimate_resources() {
     let estimate = client.estimate_resources(&1_000_000, &route);
 
     let cpu_cost = env.budget().cpu_instruction_cost();
-    assert!(cpu_cost < 5_000_000, "estimate_resources CPU cost: {}", cpu_cost);
+    assert!(
+        cpu_cost < 5_000_000,
+        "estimate_resources CPU cost: {}",
+        cpu_cost
+    );
     assert!(estimate.will_succeed);
 }
 
 #[test]
 fn stress_test_max_complexity() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
     let sender = Address::generate(&env);
 
@@ -196,14 +218,18 @@ fn stress_test_max_complexity() {
     let cpu_cost = env.budget().cpu_instruction_cost();
 
     // Critical: Must stay under Soroban limits
-    assert!(cpu_cost < 100_000_000, "CPU exceeded 100M limit: {}", cpu_cost);
+    assert!(
+        cpu_cost < 100_000_000,
+        "CPU exceeded 100M limit: {}",
+        cpu_cost
+    );
     assert!(result.is_ok(), "Max complexity swap should succeed");
 }
 
 #[test]
 fn regression_test_gas_increase() {
     let env = setup_env();
-    let (admin, _, client) = deploy_router(&env);
+    let (_admin, _, client) = deploy_router(&env);
     let pool = deploy_mock_pool(&env);
 
     env.mock_all_auths();

@@ -15,6 +15,10 @@ export interface TradingPair {
   counter_asset: string;
   offer_count: number;
   last_updated?: string;
+  /** Horizon / ledger numDecimals for base when provided by API */
+  base_decimals?: number;
+  /** Horizon / ledger numDecimals for counter when provided by API */
+  counter_decimals?: number;
 }
 
 export interface PairsResponse {
@@ -55,8 +59,17 @@ export interface PriceQuote {
   total: string;
   quote_type: QuoteType;
   path: PathStep[];
+  priceImpact?: string;
   /** Unix timestamp (seconds) */
   timestamp: number;
+  /** Unix timestamp (ms) when this quote expires */
+  expires_at?: number;
+  /** Unix timestamp (ms) of the underlying data source */
+  source_timestamp?: number;
+  /** Time-to-live in seconds for client-side staleness detection */
+  ttl_seconds?: number;
+  /** Estimated price impact percentage */
+  price_impact?: string;
 }
 
 export interface HealthStatus {
@@ -67,8 +80,22 @@ export interface HealthStatus {
   components: Record<string, string>;
 }
 
+export type ApiErrorCode =
+  | 'internal_error'
+  | 'bad_request'
+  | 'not_found'
+  | 'validation_error'
+  | 'rate_limit_exceeded'
+  | 'overloaded'
+  | 'unauthorized'
+  | 'invalid_asset'
+  | 'no_route'
+  | 'stale_market_data'
+  | 'network_error'
+  | 'unknown_error';
+
 export interface ApiError {
-  error: string;
+  error: ApiErrorCode;
   message: string;
   details?: unknown;
 }

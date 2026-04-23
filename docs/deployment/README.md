@@ -60,10 +60,22 @@ curl "https://friendbot.stellar.org/?addr=$(soroban keys address deployer)"
 This will:
 1. Build contracts to WASM
 2. Optimize the WASM binary
-3. Deploy to testnet
-4. Initialize with deployer as admin, 30 bps fee rate
-5. Save contract ID to `config/deployment-testnet.json`
-6. Verify deployment by calling `get_admin()`
+3. Deploy router + adapter contracts to testnet
+4. Initialize router with deployer as admin, 30 bps fee rate
+5. Save contract IDs to `config/deployment-testnet.json`
+6. Verify router deployment by calling `get_admin()`
+
+Environment and runtime options:
+```bash
+# optional defaults
+export STELLAR_NETWORK=testnet
+
+# simulate without writing on-chain transactions
+./scripts/deploy.sh --dry-run
+
+# use a non-default soroban identity name
+./scripts/deploy.sh --network testnet --identity deployer
+```
 
 ### 3. Register Pools
 Edit `config/pools-testnet.json` with real pool addresses, then:
@@ -100,8 +112,10 @@ The upgrade script will:
 2. Build and optimize new WASM
 3. Compare bytecode hashes (skip if identical)
 4. Install new WASM on-chain
-5. Verify all state invariants are preserved post-upgrade
-6. Update the deployment artifact
+5. Propose a timelocked router upgrade using `propose_upgrade`
+6. Redeploy adapter contract with the new WASM
+7. Verify all critical invariants are preserved
+8. Update the deployment artifact
 
 ### Post-Upgrade Verification
 ```bash

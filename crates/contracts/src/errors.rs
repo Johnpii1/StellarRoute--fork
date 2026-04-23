@@ -22,8 +22,12 @@ pub enum ContractError {
     PoolNotSupported = 30,
     PoolCallFailed = 31,
     ReserveManipulationDetected = 32,
+    AmmQuoteCallFailed = 33,
+    AmmSwapCallFailed = 34,
+    AmmReservesCallFailed = 35,
     InvalidAmount = 40,
     Overflow = 41,
+    InvalidRecipient = 42,
     // ── Multi-sig governance ─────────────────────────────────────────────────
     /// Contract is in multi-sig mode; use governance proposals instead.
     UseGovernance = 50,

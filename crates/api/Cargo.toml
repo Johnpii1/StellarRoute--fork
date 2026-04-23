@@ -10,6 +10,14 @@ repository.workspace = true
 name = "stellarroute-api"
 path = "src/bin/stellarroute-api.rs"
 
+[[bin]]
+name = "replay-cli"
+path = "src/bin/replay_cli.rs"
+
+[[bin]]
+name = "m2-readiness"
+path = "src/bin/m2_readiness.rs"
+
 [dependencies]
 # Workspace dependencies
 tokio.workspace = true
@@ -20,6 +28,11 @@ anyhow.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+tracing-opentelemetry.workspace = true
+opentelemetry.workspace = true
+opentelemetry_sdk.workspace = true
+opentelemetry-otlp.workspace = true
+opentelemetry-http.workspace = true
 axum.workspace = true
 tower.workspace = true
 tower-http.workspace = true
@@ -28,6 +41,8 @@ chrono.workspace = true
 uuid.workspace = true
 config.workspace = true
 redis.workspace = true
+reqwest.workspace = true
+rand.workspace = true
 
 # Internal dependencies
 stellarroute-indexer = { path = "../indexer" }
@@ -37,6 +52,21 @@ stellarroute-routing = { path = "../routing" }
 utoipa = { version = "4", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "6", features = ["axum"] }
 
+# Concurrency utilities
+parking_lot = "0.12"
+arc-swap = { workspace = true }
+dashmap = "5.5"
+
+# Metrics
+prometheus = "0.13"
+lazy_static = "1.4"
+
+# CLI argument parsing
+clap = { version = "4", features = ["derive"] }
+
 [dev-dependencies]
 tokio-test = "0.4"
 tower = { version = "0.4", features = ["util"] }
+proptest.workspace = true
+tokio-tungstenite = "0.20"
+futures-util = "0.3"

@@ -10,27 +10,24 @@ pub enum StorageKey {
     FeeRate,
     FeeTo,
     Paused,
-    IsMultiSig,
-    Governance,
-    Guardian,
-    ProposalCounter,
     SupportedPool(Address),
-    ProposalEntry(u64),
     PoolCount,
     SwapNonce(Address),
     // ── Persistent ─────────────────────────────────────────────────────
     TotalSwapVolume,
-    ContractVersionKey,
-    VersionHistory(u64),
-    MigrationDone(u32, u32, u32),
-    AllowedToken(Asset),
     // ── Instance — TTL tracking ────────────────────────────────────────
     PoolList,
     LastTtlExtension,
+    IsMultiSig,
+    Governance,
+    Guardian,
+    ProposalCounter,
+    ContractVersionKey,
+    PendingUpgradeKey,
     TokenCount,
     MevConfig,
     // ── Temporary (auto-expiring) ──────────────────────────────────────
-    PendingUpgradeKey,
+    PendingUpgrade,
     Commitment(BytesN<32>),
     AccountSwapCount(Address),
     AccountSwapWindowStart(Address),
@@ -42,6 +39,11 @@ pub enum StorageKey {
     TotalFeesCollected(Asset),
     TotalFeesBurned(Asset),
     DistributionHistory(Asset),
+    // ── Additional Keys ─────────────────────────────────────────────────────
+    ProposalEntry(u64),
+    VersionHistory(u64),
+    MigrationDone(u32, u32, u32),
+    AllowedToken(Asset),
 }
 
 // ── TTL Constants (in ledger sequences, ~5s per ledger) ──────────────────
@@ -168,12 +170,10 @@ pub fn is_supported_pool(e: &Env, pool: Address) -> bool {
 
 pub fn batch_check_pools(e: &Env, pools: &Vec<Address>) -> bool {
     for i in 0..pools.len() {
-        let pool = pools.get(i).unwrap();
-        if !is_supported_pool(e, pool) {
+        if !is_supported_pool(e, pools.get(i).unwrap()) {
             return false;
         }
     }
-
     true
 }
 
@@ -202,7 +202,10 @@ pub fn get_nonce(e: &Env, address: Address) -> i128 {
 pub fn increment_nonce(e: &Env, address: Address) {
     let key = StorageKey::SwapNonce(address.clone());
     let current = get_nonce(e, address.clone());
-    e.storage().persistent().set(&key, &(current + 1));
+    let next = current
+        .checked_add(1)
+        .unwrap_or_else(|| panic!("nonce overflow"));
+    e.storage().persistent().set(&key, &next);
     extend_nonce_ttl(e, &address);
 }
 
@@ -217,9 +220,10 @@ pub fn get_total_swap_volume(e: &Env) -> i128 {
 
 pub fn add_swap_volume(e: &Env, amount: i128) {
     let current = get_total_swap_volume(e);
+    let new_volume = current.checked_add(amount).unwrap_or(i128::MAX);
     e.storage()
         .persistent()
-        .set(&StorageKey::TotalSwapVolume, &(current + amount));
+        .set(&StorageKey::TotalSwapVolume, &new_volume);
     extend_volume_ttl(e);
 }
 
@@ -286,7 +290,9 @@ pub fn next_proposal_id(e: &Env) -> u64 {
         .instance()
         .get(&StorageKey::ProposalCounter)
         .unwrap_or(0);
-    let next = id + 1;
+    let next = id
+        .checked_add(1)
+        .unwrap_or_else(|| panic!("proposal id overflow"));
     e.storage()
         .instance()
         .set(&StorageKey::ProposalCounter, &next);
@@ -504,14 +510,15 @@ pub fn set_fee_balance(e: &Env, asset: &Asset, amount: i128) {
 }
 
 pub fn add_fee_balance(e: &Env, asset: &Asset, amount: i128) {
-    let new_balance = get_fee_balance(e, asset) + amount;
+    let new_balance = get_fee_balance(e, asset)
+        .checked_add(amount)
+        .unwrap_or(i128::MAX);
     set_fee_balance(e, asset, new_balance);
 
     let total_key = StorageKey::TotalFeesCollected(asset.clone());
     let current_total: i128 = e.storage().persistent().get(&total_key).unwrap_or(0);
-    e.storage()
-        .persistent()
-        .set(&total_key, &(current_total + amount));
+    let new_total = current_total.checked_add(amount).unwrap_or(i128::MAX);
+    e.storage().persistent().set(&total_key, &new_total);
     e.storage()
         .persistent()
         .extend_ttl(&total_key, 17280, 17280 * 365);
@@ -527,9 +534,8 @@ pub fn get_total_fees_collected(e: &Env, asset: &Asset) -> i128 {
 pub fn add_total_burned(e: &Env, asset: &Asset, amount: i128) {
     let key = StorageKey::TotalFeesBurned(asset.clone());
     let current_total: i128 = e.storage().persistent().get(&key).unwrap_or(0);
-    e.storage()
-        .persistent()
-        .set(&key, &(current_total + amount));
+    let new_total = current_total.checked_add(amount).unwrap_or(i128::MAX);
+    e.storage().persistent().set(&key, &new_total);
     e.storage()
         .persistent()
         .extend_ttl(&key, 17280, 17280 * 365);

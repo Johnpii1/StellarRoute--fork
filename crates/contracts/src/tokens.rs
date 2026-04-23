@@ -22,6 +22,15 @@ use soroban_sdk::{contracttype, Address, Env, Vec};
 
 /// Maximum number of tokens per `add_tokens_batch` call.
 const MAX_BATCH: u32 = 10;
+/// Maximum token decimals — Stellar uses 7, but allow up to 19 for Soroban tokens.
+const MAX_DECIMALS: u32 = 19;
+
+fn validate_token_info(info: &TokenInfo) -> Result<(), ContractError> {
+    if info.decimals > MAX_DECIMALS {
+        return Err(ContractError::InvalidAmount);
+    }
+    Ok(())
+}
 
 // ─── Category index helpers ───────────────────────────────────────────────────
 // We maintain a per-category sequential index so that callers can retrieve all
@@ -59,7 +68,12 @@ fn push_cat_entry(e: &Env, category: TokenCategory, asset: &Asset) {
     e.storage()
         .persistent()
         .extend_ttl(&key, 17280, 17280 * 365);
-    set_cat_len(e, category, idx + 1);
+    set_cat_len(
+        e,
+        category,
+        idx.checked_add(1)
+            .unwrap_or_else(|| panic!("category index overflow")),
+    );
 }
 
 // ─── Authorization helper ─────────────────────────────────────────────────────
@@ -91,6 +105,7 @@ pub fn add_token(e: &Env, caller: Address, info: TokenInfo) -> Result<(), Contra
 /// Internal add — called by both `add_token` and `add_tokens_batch` (and by
 /// governance dispatch for `ProposalAction::AddToken`).
 pub fn add_token_internal(e: &Env, caller: Address, info: TokenInfo) -> Result<(), ContractError> {
+    validate_token_info(&info)?;
     if st::is_token_allowed(e, &info.asset) {
         return Err(ContractError::TokenAlreadyAdded);
     }
@@ -100,7 +115,12 @@ pub fn add_token_internal(e: &Env, caller: Address, info: TokenInfo) -> Result<(
 
     st::save_token_info(e, &info);
     push_cat_entry(e, category, &asset);
-    st::set_token_count(e, st::get_token_count(e) + 1);
+    st::set_token_count(
+        e,
+        st::get_token_count(e)
+            .checked_add(1)
+            .unwrap_or_else(|| panic!("token count overflow")),
+    );
 
     events::token_added(e, asset, caller);
     extend_instance_ttl(e);
@@ -133,7 +153,7 @@ pub fn remove_token_internal(e: &Env, caller: Address, asset: Asset) -> Result<(
                 st::remove_token(e, &asset);
                 let count = st::get_token_count(e);
                 if count > 0 {
-                    st::set_token_count(e, count - 1);
+                    st::set_token_count(e, count.saturating_sub(1));
                 }
                 events::token_removed(e, asset, caller);
                 extend_instance_ttl(e);
@@ -147,7 +167,7 @@ pub fn remove_token_internal(e: &Env, caller: Address, asset: Asset) -> Result<(
     st::remove_token(e, &asset);
     let count = st::get_token_count(e);
     if count > 0 {
-        st::set_token_count(e, count - 1);
+        st::set_token_count(e, count.saturating_sub(1));
     }
 
     events::token_removed(e, asset, caller);
@@ -176,6 +196,11 @@ pub fn update_token_internal(
     if !st::is_token_allowed(e, &asset) {
         return Err(ContractError::TokenNotAllowed);
     }
+    // updated.asset must match the asset being updated — prevent silent asset swap.
+    if updated.asset != asset {
+        return Err(ContractError::InvalidAmount);
+    }
+    validate_token_info(&updated)?;
     st::save_token_info(e, &updated);
     events::token_updated(e, asset, caller);
     extend_instance_ttl(e);

@@ -14,6 +14,7 @@ import type {
   PairsResponse,
   PriceQuote,
   QuoteType,
+  ApiErrorCode,
 } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -23,9 +24,10 @@ import type {
 export class StellarRouteApiError extends Error {
   constructor(
     public readonly status: number,
-    public readonly code: string,
+    public readonly code: ApiErrorCode,
     message: string,
     public readonly details?: unknown,
+    public readonly retryAfterMs: number | null = null,
   ) {
     super(message);
     this.name = 'StellarRouteApiError';
@@ -49,6 +51,24 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 /** Sleep for `ms` milliseconds. */
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
+function parseRetryAfterMs(headerValue: string | null): number | null {
+  if (!headerValue) {
+    return null;
+  }
+
+  const seconds = Number(headerValue);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return seconds * 1_000;
+  }
+
+  const retryDateMs = Date.parse(headerValue);
+  if (Number.isNaN(retryDateMs)) {
+    return null;
+  }
+
+  return Math.max(0, retryDateMs - Date.now());
+}
+
 interface FetchOptions {
   signal?: AbortSignal;
 }
@@ -59,6 +79,7 @@ interface FetchOptions {
 
 export class StellarRouteClient {
   private readonly baseUrl: string;
+  private readonly retries: number = 2;
 
   constructor(baseUrl?: string) {
     this.baseUrl =
@@ -75,6 +96,8 @@ export class StellarRouteClient {
     path: string,
     opts: FetchOptions = {},
     retries = 2,
+    method: 'GET' | 'POST' = 'GET',
+    body?: unknown,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const controller = new AbortController();
@@ -87,20 +110,33 @@ export class StellarRouteClient {
     opts.signal?.addEventListener('abort', () => controller.abort());
 
     try {
-      const response = await fetch(url, {
+      const fetchOptions: RequestInit = {
+        method,
         headers: { Accept: 'application/json' },
         signal: controller.signal,
-      });
+      };
+
+      if (body) {
+        fetchOptions.body = JSON.stringify(body);
+        (fetchOptions.headers as Record<string, string>)['Content-Type'] =
+          'application/json';
+      }
+
+      const response = await fetch(url, fetchOptions);
 
       if (!response.ok) {
+        const retryAfterMs = parseRetryAfterMs(
+          response.headers.get('Retry-After'),
+        );
+
         // Try to parse the backend ErrorResponse body
-        let code = 'unknown_error';
+        let code: ApiErrorCode = 'unknown_error';
         let message = `HTTP ${response.status}`;
         let details: unknown;
 
         try {
           const body = await response.json();
-          code = body.error ?? code;
+          code = (body.error as ApiErrorCode) ?? code;
           message = body.message ?? message;
           details = body.details;
         } catch {
@@ -109,13 +145,17 @@ export class StellarRouteClient {
 
         // Retry on rate-limit (429) and server errors (5xx) with backoff
         if ((response.status === 429 || response.status >= 500) && retries > 0) {
-          const retryAfter =
-            Number(response.headers.get('Retry-After') ?? 1) * 1_000;
-          await sleep(retryAfter || 1_000 * (3 - retries));
-          return this.request<T>(path, opts, retries - 1);
+          await sleep(retryAfterMs ?? 1_000 * (3 - retries));
+          return this.request<T>(path, opts, retries - 1, method, body);
         }
 
-        throw new StellarRouteApiError(response.status, code, message, details);
+        throw new StellarRouteApiError(
+          response.status,
+          code,
+          message,
+          details,
+          retryAfterMs,
+        );
       }
 
       return response.json() as Promise<T>;
@@ -125,12 +165,12 @@ export class StellarRouteClient {
       // Network error / timeout
       if (retries > 0) {
         await sleep(500 * (3 - retries));
-        return this.request<T>(path, opts, retries - 1);
+        return this.request<T>(path, opts, retries - 1, method, body);
       }
 
       const message =
         err instanceof Error ? err.message : 'Network error';
-      throw new StellarRouteApiError(0, 'network_error', message);
+      throw new StellarRouteApiError(0, 'network_error' as ApiErrorCode, message);
     } finally {
       clearTimeout(timer);
     }
@@ -185,6 +225,41 @@ export class StellarRouteClient {
     const path = `/api/v1/quote/${encodeURIComponent(base)}/${encodeURIComponent(quote)}?${params}`;
     return this.request<PriceQuote>(path, opts);
   }
+
+  /**
+   * POST /api/v1/batch/quote — fetch multiple price quotes in a single request.
+   *
+   * @param requests Array of quote requests to fetch.
+   *
+   * @throws {StellarRouteApiError} when the batch request fails.
+   */
+  async getQuotesBatch(
+    requests: QuoteRequestItem[],
+    opts?: FetchOptions,
+  ): Promise<BatchQuoteResponse> {
+    const path = '/api/v1/batch/quote';
+    return this.request<BatchQuoteResponse>(
+      path,
+      opts,
+      this.retries,
+      'POST',
+      requests,
+    );
+  }
+}
+
+/** Single request item for a batch quote. */
+export interface QuoteRequestItem {
+  base: string;
+  quote: string;
+  amount?: number;
+  quote_type?: QuoteType;
+}
+
+/** Response from a batch quote request. */
+export interface BatchQuoteResponse {
+  quotes: PriceQuote[];
+  total: number;
 }
 
 // ---------------------------------------------------------------------------

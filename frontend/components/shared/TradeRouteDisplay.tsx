@@ -34,8 +34,11 @@ function convertToSplitRoute(path: PathStep[]): SplitRouteData {
 
 function calculateMetrics(quote: PriceQuote): RouteMetrics {
   // Calculate metrics from quote data
-  const totalFees = '0.0001'; // Placeholder - would calculate from path
-  const totalPriceImpact = '0.1%'; // Placeholder - would calculate from path
+  const hops = Math.max(quote.path.length, 1);
+  const totalFees = `${(hops * 0.00001).toFixed(5)} XLM`;
+  const totalPriceImpact = quote.priceImpact != null
+    ? `${quote.priceImpact}${quote.priceImpact.includes('%') ? '' : '%'}`
+    : 'N/A';
   const netOutput = quote.total;
   const averageRate = quote.price;
 
@@ -54,6 +57,16 @@ export function TradeRouteDisplay({
   className,
 }: TradeRouteDisplayProps) {
   const [displayError, setDisplayError] = useState<string | undefined>(error);
+  const breakdown = quote
+    ? {
+        hops: quote.path.length,
+        totalFees: `${(Math.max(quote.path.length, 1) * 0.00001).toFixed(5)} XLM`,
+        priceImpact:
+          quote.priceImpact != null
+            ? `${quote.priceImpact}${quote.priceImpact.includes('%') ? '' : '%'}`
+            : 'N/A',
+      }
+    : undefined;
 
   useEffect(() => {
     setDisplayError(error);
@@ -96,46 +109,24 @@ export function TradeRouteDisplay({
   }
 
   // Regular single-path route
-  return <RouteVisualization path={quote.path} className={className} />;
+  return (
+    <RouteVisualization
+      path={quote.path}
+      className={className}
+      breakdown={breakdown}
+    />
+  );
 }
 
+/**
+ * Placeholder example — for live quotes use `useQuoteRefresh` from
+ * `@/hooks/useQuoteRefresh` with `stellarRouteClient.getQuote` (see `DemoSwap`).
+ * A future WebSocket quote stream can push updates into the same hook.
+ */
 export function TradeRouteExample() {
-  const [quote, setQuote] = useState<PriceQuote | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>();
-
-  // Example: Fetch quote from API
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const fetchQuote = async (
-    baseAsset: string,
-    quoteAsset: string,
-    amount: string
-  ) => {
-    try {
-      setIsLoading(true);
-      setError(undefined);
-
-      // Replace with actual API call
-      const response = await fetch(
-        `/api/quote?base=${baseAsset}&quote=${quoteAsset}&amount=${amount}&type=sell`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch quote');
-      }
-
-      const data: PriceQuote = await response.json();
-      setQuote(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <TradeRouteDisplay quote={quote} isLoading={isLoading} error={error} />
+      <TradeRouteDisplay quote={null} />
     </div>
   );
 }

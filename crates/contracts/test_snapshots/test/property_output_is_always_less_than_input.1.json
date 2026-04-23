@@ -113,7 +113,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -189,7 +189,186 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ],
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+              "function_name": "execute_swap",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "amount_in"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 100
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "deadline"
+                      },
+                      "val": {
+                        "u64": 100
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_execution_spread_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_price_impact_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_amount_out"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 0
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "not_before"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "recipient"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "route"
+                      },
+                      "val": {
+                        "map": [
+                          {
+                            "key": {
+                              "symbol": "estimated_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
+                              }
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "expires_at"
+                            },
+                            "val": {
+                              "u64": 99999
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "hops"
+                            },
+                            "val": {
+                              "vec": [
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "min_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
                               }
                             }
                           }
@@ -294,7 +473,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -370,7 +549,186 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ],
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+              "function_name": "execute_swap",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "amount_in"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 1000
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "deadline"
+                      },
+                      "val": {
+                        "u64": 100
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_execution_spread_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_price_impact_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_amount_out"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 0
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "not_before"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "recipient"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "route"
+                      },
+                      "val": {
+                        "map": [
+                          {
+                            "key": {
+                              "symbol": "estimated_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
+                              }
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "expires_at"
+                            },
+                            "val": {
+                              "u64": 99999
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "hops"
+                            },
+                            "val": {
+                              "vec": [
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "min_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
                               }
                             }
                           }
@@ -475,7 +833,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -551,7 +909,186 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ],
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAX5",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+              "function_name": "execute_swap",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATYON"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "amount_in"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 10000
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "deadline"
+                      },
+                      "val": {
+                        "u64": 100
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_execution_spread_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_price_impact_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_amount_out"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 0
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "not_before"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "recipient"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAX5"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "route"
+                      },
+                      "val": {
+                        "map": [
+                          {
+                            "key": {
+                              "symbol": "estimated_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
+                              }
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "expires_at"
+                            },
+                            "val": {
+                              "u64": 99999
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "hops"
+                            },
+                            "val": {
+                              "vec": [
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "min_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
                               }
                             }
                           }
@@ -656,7 +1193,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -732,7 +1269,186 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ],
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYRE5",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+              "function_name": "execute_swap",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXI7N"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "amount_in"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 100000
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "deadline"
+                      },
+                      "val": {
+                        "u64": 100
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_execution_spread_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_price_impact_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_amount_out"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 0
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "not_before"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "recipient"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYRE5"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "route"
+                      },
+                      "val": {
+                        "map": [
+                          {
+                            "key": {
+                              "symbol": "estimated_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
+                              }
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "expires_at"
+                            },
+                            "val": {
+                              "u64": 99999
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "hops"
+                            },
+                            "val": {
+                              "vec": [
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "min_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
                               }
                             }
                           }
@@ -837,7 +1553,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -913,7 +1629,186 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ],
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4BV5",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+              "function_name": "execute_swap",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2ZMN"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "amount_in"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 1000000
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "deadline"
+                      },
+                      "val": {
+                        "u64": 100
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_execution_spread_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_price_impact_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_amount_out"
+                      },
+                      "val": {
+                        "i128": {
+                          "hi": 0,
+                          "lo": 0
+                        }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "not_before"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "recipient"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4BV5"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "route"
+                      },
+                      "val": {
+                        "map": [
+                          {
+                            "key": {
+                              "symbol": "estimated_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
+                              }
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "expires_at"
+                            },
+                            "val": {
+                              "u64": 99999
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "hops"
+                            },
+                            "val": {
+                              "vec": [
+                                {
+                                  "map": [
+                                    {
+                                      "key": {
+                                        "symbol": "destination"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool"
+                                      },
+                                      "val": {
+                                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "pool_type"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "AmmConstProd"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "key": {
+                                        "symbol": "source"
+                                      },
+                                      "val": {
+                                        "vec": [
+                                          {
+                                            "symbol": "Native"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "key": {
+                              "symbol": "min_output"
+                            },
+                            "val": {
+                              "i128": {
+                                "hi": 0,
+                                "lo": 0
                               }
                             }
                           }
@@ -971,6 +1866,62 @@
             "ext": "v0"
           },
           6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "FeeBalance"
+                },
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "FeeBalance"
+                    },
+                    {
+                      "vec": [
+                        {
+                          "symbol": "Native"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 3298
+                  }
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          518400
         ]
       ],
       [
@@ -1265,6 +2216,62 @@
             "key": {
               "vec": [
                 {
+                  "symbol": "TotalFeesCollected"
+                },
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "TotalFeesCollected"
+                    },
+                    {
+                      "vec": [
+                        {
+                          "symbol": "Native"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 3298
+                  }
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          6307200
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
+            "key": {
+              "vec": [
+                {
                   "symbol": "TotalSwapVolume"
                 }
               ]
@@ -1489,7 +2496,7 @@
       [
         {
           "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM",
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
             "key": {
               "ledger_key_nonce": {
                 "nonce": 1033654523790656264
@@ -1504,7 +2511,7 @@
             "data": {
               "contract_data": {
                 "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 1033654523790656264
@@ -1522,7 +2529,7 @@
       [
         {
           "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATYON",
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM",
             "key": {
               "ledger_key_nonce": {
                 "nonce": 4837995959683129791
@@ -1537,7 +2544,7 @@
             "data": {
               "contract_data": {
                 "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATYON",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM",
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 4837995959683129791
@@ -1555,7 +2562,7 @@
       [
         {
           "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXI7N",
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5",
             "key": {
               "ledger_key_nonce": {
                 "nonce": 2032731177588607455
@@ -1570,7 +2577,7 @@
             "data": {
               "contract_data": {
                 "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXI7N",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARQG5",
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 2032731177588607455
@@ -1588,7 +2595,7 @@
       [
         {
           "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2ZMN",
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATYON",
             "key": {
               "ledger_key_nonce": {
                 "nonce": 4270020994084947596
@@ -1603,10 +2610,175 @@
             "data": {
               "contract_data": {
                 "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2ZMN",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATYON",
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 4270020994084947596
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAX5",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 8370022561469687789
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAX5",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 8370022561469687789
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXI7N",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 6277191135259896685
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXI7N",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 6277191135259896685
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYRE5",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 5806905060045992000
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYRE5",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 5806905060045992000
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2ZMN",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 1194852393571756375
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2ZMN",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 1194852393571756375
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4BV5",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 115220454072064130
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4BV5",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 115220454072064130
                   }
                 },
                 "durability": "temporary",
@@ -1904,7 +3076,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -1980,7 +3152,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
                               }
                             }
                           }
@@ -2242,7 +3414,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 990
+                          "lo": 0
                         }
                       }
                     },
@@ -2318,7 +3490,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 900
+                          "lo": 0
                         }
                       }
                     }
@@ -2394,7 +3566,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 990
+                            "lo": 0
                           }
                         }
                       },
@@ -2470,7 +3642,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 900
+                            "lo": 0
                           }
                         }
                       }
@@ -2584,7 +3756,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -2660,7 +3832,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
                               }
                             }
                           }
@@ -2887,6 +4059,46 @@
                 "symbol": "StellarRoute"
               },
               {
+                "symbol": "fee_col"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                },
+                {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 2
+                  }
+                },
+                {
+                  "u32": 0
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "StellarRoute"
+              },
+              {
                 "symbol": "swap"
               },
               {
@@ -2922,7 +4134,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 990
+                          "lo": 0
                         }
                       }
                     },
@@ -2998,7 +4210,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 900
+                          "lo": 0
                         }
                       }
                     }
@@ -3074,7 +4286,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 990
+                            "lo": 0
                           }
                         }
                       },
@@ -3150,7 +4362,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 900
+                            "lo": 0
                           }
                         }
                       }
@@ -3264,7 +4476,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -3340,7 +4552,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
                               }
                             }
                           }
@@ -3567,6 +4779,46 @@
                 "symbol": "StellarRoute"
               },
               {
+                "symbol": "fee_col"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                },
+                {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 29
+                  }
+                },
+                {
+                  "u32": 0
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "StellarRoute"
+              },
+              {
                 "symbol": "swap"
               },
               {
@@ -3602,7 +4854,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 990
+                          "lo": 0
                         }
                       }
                     },
@@ -3678,7 +4930,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 900
+                          "lo": 0
                         }
                       }
                     }
@@ -3754,7 +5006,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 990
+                            "lo": 0
                           }
                         }
                       },
@@ -3830,7 +5082,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 900
+                            "lo": 0
                           }
                         }
                       }
@@ -3944,7 +5196,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -4020,7 +5272,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
                               }
                             }
                           }
@@ -4247,6 +5499,46 @@
                 "symbol": "StellarRoute"
               },
               {
+                "symbol": "fee_col"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                },
+                {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 297
+                  }
+                },
+                {
+                  "u32": 0
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "StellarRoute"
+              },
+              {
                 "symbol": "swap"
               },
               {
@@ -4282,7 +5574,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 990
+                          "lo": 0
                         }
                       }
                     },
@@ -4358,7 +5650,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 900
+                          "lo": 0
                         }
                       }
                     }
@@ -4434,7 +5726,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 990
+                            "lo": 0
                           }
                         }
                       },
@@ -4510,7 +5802,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 900
+                            "lo": 0
                           }
                         }
                       }
@@ -4624,7 +5916,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 990
+                                "lo": 0
                               }
                             }
                           },
@@ -4700,7 +5992,7 @@
                             "val": {
                               "i128": {
                                 "hi": 0,
-                                "lo": 900
+                                "lo": 0
                               }
                             }
                           }
@@ -4927,6 +6219,46 @@
                 "symbol": "StellarRoute"
               },
               {
+                "symbol": "fee_col"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "vec": [
+                    {
+                      "symbol": "Native"
+                    }
+                  ]
+                },
+                {
+                  "i128": {
+                    "hi": 0,
+                    "lo": 2970
+                  }
+                },
+                {
+                  "u32": 0
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "StellarRoute"
+              },
+              {
                 "symbol": "swap"
               },
               {
@@ -4962,7 +6294,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 990
+                          "lo": 0
                         }
                       }
                     },
@@ -5038,7 +6370,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 900
+                          "lo": 0
                         }
                       }
                     }
@@ -5114,7 +6446,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 990
+                            "lo": 0
                           }
                         }
                       },
@@ -5190,7 +6522,7 @@
                         "val": {
                           "i128": {
                             "hi": 0,
-                            "lo": 900
+                            "lo": 0
                           }
                         }
                       }

@@ -74,25 +74,6 @@ pub struct TTLStatus {
     pub last_extended_ledger: u32,
 }
 
-#[contracttype]
-#[derive(Clone, Debug, PartialEq)]
-pub struct MevConfig {
-    pub commit_threshold: i128,
-    pub commit_window_ledgers: u32,
-    pub rate_limit_window: u32,
-    pub max_swaps_per_window: u32,
-    pub high_impact_threshold_bps: u32,
-}
-
-#[contracttype]
-#[derive(Clone, Debug, PartialEq)]
-pub struct CommitmentData {
-    pub sender: Address,
-    pub deposit_amount: i128,
-    pub created_at: u32,
-    pub expires_at: u32,
-}
-
 // --- Fee Distribution Types ---
 
 #[contracttype]
@@ -226,7 +207,28 @@ pub struct ContractVersion {
 pub struct PendingUpgrade {
     pub new_wasm_hash: BytesN<32>,
     pub proposed_at: u64,
-    /// Minimum ledger sequence before `execute_upgrade` is callable.
     pub execute_after: u64,
     pub proposer: Address,
+}
+
+/// Commit-reveal swap intent.
+/// Stored in Instance storage.
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct CommitmentData {
+    pub sender: Address,
+    pub deposit_amount: i128,
+    pub commitment_hash: BytesN<32>,
+    pub created_at: u64,
+    pub expires_at: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct MevConfig {
+    pub max_price_impact_bps: u32,
+    pub max_execution_spread_bps: u32,
+    pub rate_limit_window_ledgers: u32,
+    pub rate_limit_max_swaps: u32,
+    pub commitment_required_above: i128,
 }
