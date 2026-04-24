@@ -66,7 +66,7 @@ impl DemandForecaster {
             });
         }
 
-        top.sort_by(|a, b| b.access_count.cmp(&a.access_count));
+        top.sort_by_key(|b| std::cmp::Reverse(b.access_count));
         top.truncate(self.max_keys);
     }
 
