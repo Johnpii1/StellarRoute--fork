@@ -275,7 +275,11 @@ impl AppState {
         let mut score = 1.0;
 
         // Check DB
-        if let Err(_) = sqlx::query("SELECT 1").execute(self.db.read_pool()).await {
+        if sqlx::query("SELECT 1")
+            .execute(self.db.read_pool())
+            .await
+            .is_err()
+        {
             score *= 0.5;
         }
 

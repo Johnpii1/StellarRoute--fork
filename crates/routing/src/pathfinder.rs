@@ -3,7 +3,7 @@
 use crate::error::{Result, RoutingError};
 use crate::policy::RoutingPolicy;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use tracing::instrument;
 
 /// Configuration for path discovery
@@ -140,31 +140,6 @@ impl Pathfinder {
         Ok(paths)
     }
 
-    fn build_graph(
-        &self,
-        edges: &[LiquidityEdge],
-        policy: &RoutingPolicy,
-    ) -> Result<HashMap<String, Vec<LiquidityEdge>>> {
-        let mut graph: HashMap<String, Vec<LiquidityEdge>> = HashMap::new();
-
-        for edge in edges {
-            // Apply venue type routing policy
-            if !policy.is_venue_allowed(&edge.venue_type) {
-                continue;
-            }
-
-            if edge.liquidity < self.config.min_liquidity_threshold {
-                continue; // Skip low-liquidity edges
-            }
-
-            graph
-                .entry(edge.from.clone())
-                .or_default()
-                .push(edge.clone());
-        }
-
-        Ok(graph)
-    }
 
     fn bfs_paths_compacted(
         &self,

@@ -10,20 +10,12 @@ use utoipa::ToSchema;
 
 const REDIS_KILL_SWITCH_KEY: &str = "stellarroute:kill_switches";
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct KillSwitchState {
     pub sources: HashMap<VenueType, OverrideDirective>,
     pub venues: HashMap<String, OverrideDirective>,
 }
 
-impl Default for KillSwitchState {
-    fn default() -> Self {
-        Self {
-            sources: HashMap::new(),
-            venues: HashMap::new(),
-        }
-    }
-}
 
 pub struct KillSwitchManager {
     cache: Option<Arc<Mutex<CacheManager>>>,
