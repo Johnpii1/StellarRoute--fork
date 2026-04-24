@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use thiserror::Error;
+use tokio::sync::RwLock;
 use tracing::instrument;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -138,7 +138,10 @@ mod tests {
         };
 
         let response = b"test_response".to_vec();
-        ledger.record(identity.clone(), response.clone(), 100).await.unwrap();
+        ledger
+            .record(identity.clone(), response.clone(), 100)
+            .await
+            .unwrap();
 
         let retrieved = ledger.lookup(&identity).await.unwrap();
         assert_eq!(retrieved, response);

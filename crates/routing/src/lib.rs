@@ -16,6 +16,10 @@ pub mod policy;
 pub mod risk;
 pub mod simulator;
 
+pub use adaptive_routing::{AdaptiveError, AdaptivePolicy, AdaptiveRouter, QualityMetrics};
+pub use consensus::{
+    ConsensusDiagnostics, ConsensusEngine, ConsensusError, ConsensusPolicy, RouteCandidate,
+};
 pub use impact::{AmmQuoteCalculator, OrderbookImpactCalculator};
 pub use optimizer::{
     HybridOptimizer, OptimizerDiagnostics, OptimizerPolicy, PolicyPresets, RouteMetrics,
@@ -23,8 +27,6 @@ pub use optimizer::{
 pub use pathfinder::{LiquidityEdge, Pathfinder, PathfinderConfig, SwapPath};
 pub use policy::RoutingPolicy;
 pub use risk::{AssetRiskLimit, ExclusionReason, RiskLimitConfig, RiskValidator, RouteExclusion};
-pub use consensus::{ConsensusEngine, ConsensusPolicy, RouteCandidate, ConsensusDiagnostics, ConsensusError};
-pub use adaptive_routing::{AdaptiveRouter, AdaptivePolicy, QualityMetrics, AdaptiveError};
 
 /// Routing engine with integrated pathfinding and impact calculations
 pub struct RoutingEngine {

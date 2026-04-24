@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use thiserror::Error;
-use tracing::{warn, info};
+use tracing::{info, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdaptivePolicy {
@@ -110,7 +110,8 @@ impl AdaptiveRouter {
             .max(self.policy.min_latency_ms)
             .min(self.policy.max_latency_ms);
 
-        self.current_latency_budget.store(new_budget, Ordering::Release);
+        self.current_latency_budget
+            .store(new_budget, Ordering::Release);
         Ok(())
     }
 

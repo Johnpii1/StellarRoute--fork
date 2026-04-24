@@ -3,9 +3,9 @@
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use thiserror::Error;
-use tracing::{warn, instrument};
+use tokio::sync::RwLock;
+use tracing::{instrument, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrewarmMetrics {
@@ -102,10 +102,7 @@ pub struct CachePrewarmer {
 }
 
 impl CachePrewarmer {
-    pub fn new(
-        forecaster: Arc<DemandForecaster>,
-        max_prewarm_entries: u64,
-    ) -> Self {
+    pub fn new(forecaster: Arc<DemandForecaster>, max_prewarm_entries: u64) -> Self {
         Self {
             forecaster,
             max_prewarm_entries,
@@ -121,19 +118,24 @@ impl CachePrewarmer {
     }
 
     #[instrument(skip(self, compute_fn))]
-    pub async fn prewarm<F, T>(
-        &self,
-        compute_fn: F,
-    ) -> Result<(), PrewarmError>
+    pub async fn prewarm<F, T>(&self, compute_fn: F) -> Result<(), PrewarmError>
     where
-        F: Fn(String) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, String>> + Send>> + Send + Sync,
+        F: Fn(
+                String,
+            )
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, String>> + Send>>
+            + Send
+            + Sync,
     {
         if self.prewarm_entries.load(Ordering::Acquire) > self.max_prewarm_entries {
             warn!("Prewarm resource limit exceeded");
             return Err(PrewarmError::ResourceLimitExceeded);
         }
 
-        let _permit = self.enabled.acquire().await
+        let _permit = self
+            .enabled
+            .acquire()
+            .await
             .map_err(|_| PrewarmError::Error("Semaphore error".to_string()))?;
 
         let keys = self.forecaster.forecast_top_keys().await;
@@ -194,9 +196,7 @@ mod tests {
         forecaster.record_access("test_key".to_string()).await;
 
         prewarmer
-            .prewarm(|_key| {
-                Box::pin(async { Ok::<(), String>(()) })
-            })
+            .prewarm(|_key| Box::pin(async { Ok::<(), String>(()) }))
             .await
             .ok();
 

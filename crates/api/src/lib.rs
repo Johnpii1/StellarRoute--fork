@@ -24,7 +24,7 @@ pub mod worker;
 pub use cache::CacheManager;
 pub use docs::ApiDoc;
 pub use error::{ApiError, Result};
-pub use exactlyonce::{DedupeLedger, RequestIdentity, ExactlyOnceError};
+pub use exactlyonce::{DedupeLedger, ExactlyOnceError, RequestIdentity};
 pub use server::{Server, ServerConfig};
 pub use state::AppState;
 pub use tracing_config::{TraceContext, TracingConfig};

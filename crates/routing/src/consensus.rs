@@ -84,13 +84,12 @@ impl ConsensusEngine {
                     .copied()
                     .unwrap_or(0.5);
 
-                let freshness_penalty = if now.saturating_sub(candidate.timestamp)
-                    > self.policy.freshness_window
-                {
-                    0.5
-                } else {
-                    1.0
-                };
+                let freshness_penalty =
+                    if now.saturating_sub(candidate.timestamp) > self.policy.freshness_window {
+                        0.5
+                    } else {
+                        1.0
+                    };
 
                 let score = base_weight * freshness_penalty * (1.0 / (candidate.price + 0.001));
                 (candidate, score)
@@ -107,8 +106,7 @@ impl ConsensusEngine {
             .sum();
 
         let consensus_score = consensus_weight.min(1.0);
-        let conflict = scores.len() > 1
-            && (scores[0].1 - scores[1].1).abs() / scores[0].1 < 0.15;
+        let conflict = scores.len() > 1 && (scores[0].1 - scores[1].1).abs() / scores[0].1 < 0.15;
 
         Ok(ConsensusDiagnostics {
             winning_route: scores[0].0.clone(),
