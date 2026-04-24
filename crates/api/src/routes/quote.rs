@@ -10,15 +10,12 @@
 //!
 //! Request logs and decision stages include matching `request_id` values.
 
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{extract::State, Json};
 use sqlx::Row;
 use std::sync::Arc;
-use tracing::{debug, info_span, warn, Instrument};
 use std::time::Duration;
 use tokio::time::timeout;
+use tracing::{debug, info_span, warn, Instrument};
 
 use stellarroute_routing::health::filter::GraphFilter;
 use stellarroute_routing::health::freshness::{FreshnessGuard, FreshnessOutcome};
@@ -174,16 +171,19 @@ pub async fn get_batch_quotes(
         let params = QuoteParams {
             amount: item.amount,
             slippage_bps: item.slippage_bps,
-            quote_type: item.quote_type.unwrap_or(crate::models::request::QuoteType::Sell),
+            quote_type: item
+                .quote_type
+                .unwrap_or(crate::models::request::QuoteType::Sell),
             explain: None,
         };
-        
+
         let base_asset = AssetPath::parse(&item.base)
             .map_err(|e| ApiError::InvalidAsset(format!("Invalid base asset: {}", e)))?;
         let quote_asset = AssetPath::parse(&item.quote)
             .map_err(|e| ApiError::InvalidAsset(format!("Invalid quote asset: {}", e)))?;
-            
-        let (quote, _) = get_quote_inner(state.clone(), base_asset, quote_asset, params, false).await?;
+
+        let (quote, _) =
+            get_quote_inner(state.clone(), base_asset, quote_asset, params, false).await?;
         quotes.push(quote);
     }
 
@@ -206,12 +206,8 @@ async fn get_quote_inner(
 
     debug!(
         "Getting data quote for {}/{} (amount: {:?}, type: {:?})",
-        base,
-        quote,
-        params.amount,
-        params.quote_type
+        base, quote, params.amount, params.quote_type
     );
-
 
     // Parse amount (default to 1)
     let amount: f64 = params
@@ -278,11 +274,18 @@ async fn get_quote_inner(
             let compute_res =
                 find_best_price(&state, &base_asset, &quote_asset, base_id, quote_id, amount).await;
 
-            let (price, path, rationale, api_diagnostics, freshness_outcome, fresh_timestamps, liquidity_snapshot) =
-                match compute_res {
-                    Ok(res) => res,
-                    Err(e) => return Arc::new(Err(e)),
-                };
+            let (
+                price,
+                path,
+                rationale,
+                api_diagnostics,
+                freshness_outcome,
+                fresh_timestamps,
+                liquidity_snapshot,
+            ) = match compute_res {
+                Ok(res) => res,
+                Err(e) => return Arc::new(Err(e)),
+            };
 
             // Increment stale inputs metrics
             let stale_count = freshness_outcome.stale.len();
@@ -499,7 +502,6 @@ async fn find_best_price(
             .then_with(|| a.venue_ref.cmp(&b.venue_ref))
     });
 
-
     // Capture a single wall-clock instant for both scorer_inputs construction and freshness eval
     let now = chrono::Utc::now();
 
@@ -514,9 +516,9 @@ async fn find_best_price(
                     best_bid_e7: None,
                     best_ask_e7: None,
                     depth_top_n_e7: None,
-                    reserve_a_e7: Some((c.available_amount * 1e7) as i128),
-                    reserve_b_e7: Some((c.available_amount * 1e7) as i128),
-                    tvl_e7: Some((c.available_amount * 2e7) as i128),
+                    reserve_a_e7: Some(c.available_amount_e7 as i128),
+                    reserve_b_e7: Some(c.available_amount_e7 as i128),
+                    tvl_e7: Some((c.available_amount_e7 * 2) as i128),
                     last_updated_at: Some(now),
                 }
             } else {
@@ -524,8 +526,8 @@ async fn find_best_price(
                     venue_ref: c.venue_ref.clone(),
                     venue_type: VenueType::Sdex,
                     best_bid_e7: None,
-                    best_ask_e7: Some((c.price * 1e7) as i128),
-                    depth_top_n_e7: Some((c.available_amount * 1e7) as i128),
+                    best_ask_e7: Some(c.price_e7 as i128),
+                    depth_top_n_e7: Some(c.available_amount_e7 as i128),
                     reserve_a_e7: None,
                     reserve_b_e7: None,
                     tvl_e7: None,
@@ -694,6 +696,8 @@ struct DirectVenueCandidate {
     venue_ref: String,
     price: f64,
     available_amount: f64,
+    price_e7: i64,
+    available_amount_e7: i64,
 }
 
 impl DirectVenueCandidate {
@@ -803,7 +807,9 @@ async fn fetch_source_candidates(
                     venue_type,
                     venue_ref,
                     price::text as price,
-                    available_amount::text as available_amount
+                    available_amount::text as available_amount,
+                    price_e7,
+                    available_amount_e7
                 from normalized_liquidity
         where selling_asset_id = $1
           and buying_asset_id = $2
@@ -826,11 +832,15 @@ async fn fetch_source_candidates(
                 .get::<String, _>("available_amount")
                 .parse()
                 .unwrap_or(0.0);
+            let price_e7: i64 = row.get("price_e7");
+            let available_amount_e7: i64 = row.get("available_amount_e7");
             DirectVenueCandidate {
                 venue_type,
                 venue_ref,
                 price,
                 available_amount,
+                price_e7,
+                available_amount_e7,
             }
         })
         .collect())
@@ -926,6 +936,8 @@ mod tests {
             venue_ref: venue_ref.to_string(),
             price,
             available_amount,
+            price_e7: (price * 1e7) as i64,
+            available_amount_e7: (available_amount * 1e7) as i64,
         }
     }
 
@@ -1213,13 +1225,13 @@ mod tests {
 
         // Parallel
         let start = Instant::now();
-        let _ = tokio::join!(
-            simulated_source(delay),
-            simulated_source(delay)
-        );
+        let _ = tokio::join!(simulated_source(delay), simulated_source(delay));
         let par_duration = start.elapsed();
 
-        println!("Sequential: {:?}, Parallel: {:?}", seq_duration, par_duration);
+        println!(
+            "Sequential: {:?}, Parallel: {:?}",
+            seq_duration, par_duration
+        );
         assert!(par_duration < seq_duration);
         assert!(par_duration >= Duration::from_millis(delay));
         assert!(par_duration < Duration::from_millis(delay * 2));

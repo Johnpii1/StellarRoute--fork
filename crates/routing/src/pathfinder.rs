@@ -60,6 +60,10 @@ impl Pathfinder {
         Self { config }
     }
 
+    pub fn config(&self) -> &PathfinderConfig {
+        &self.config
+    }
+
     /// Find optimal N-hop paths with cycle prevention and depth limits
     #[instrument(skip(self, edges, policy), fields(
         route.from = %from,

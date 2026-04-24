@@ -1,7 +1,6 @@
 //! API server setup and configuration
 
 use axum::{http::Request, Router};
-use sqlx::PgPool;
 use std::{net::SocketAddr, sync::Arc};
 use tower_http::{
     compression::CompressionLayer,
@@ -25,7 +24,7 @@ use crate::{
 };
 
 /// API server configuration
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ServerConfig {
     /// Server host address
     pub host: String,
@@ -39,6 +38,19 @@ pub struct ServerConfig {
     pub redis_url: Option<String>,
     /// Quote cache TTL in seconds
     pub quote_cache_ttl_seconds: u64,
+}
+
+impl std::fmt::Debug for ServerConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServerConfig")
+            .field("host", &self.host)
+            .field("port", &self.port)
+            .field("enable_cors", &self.enable_cors)
+            .field("enable_compression", &self.enable_compression)
+            .field("redis_url", &self.redis_url.as_ref().map(|_| "[REDACTED]"))
+            .field("quote_cache_ttl_seconds", &self.quote_cache_ttl_seconds)
+            .finish()
+    }
 }
 
 impl Default for ServerConfig {

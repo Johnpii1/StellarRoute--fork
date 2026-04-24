@@ -310,7 +310,7 @@ impl RateLimitLayer {
         if let Some(cfg) = Arc::get_mut(&mut self.endpoint_config) {
             cfg.tenant_overrides.insert(tenant_id.into(), config);
         } else {
-            // Fallback: we can't mutate if there are multiple Arcs, 
+            // Fallback: we can't mutate if there are multiple Arcs,
             // but in initialization there should only be one.
             warn!("Could not set rate limit override: EndpointConfig is shared");
         }
@@ -414,11 +414,7 @@ where
 /// Extract consumer identity from auth headers or fallback to IP.
 fn extract_identity(req: &Request<Body>) -> String {
     // 1. Check X-API-Key
-    if let Some(key) = req
-        .headers()
-        .get("x-api-key")
-        .and_then(|v| v.to_str().ok())
-    {
+    if let Some(key) = req.headers().get("x-api-key").and_then(|v| v.to_str().ok()) {
         return format!("apikey:{}", key);
     }
 
@@ -428,8 +424,8 @@ fn extract_identity(req: &Request<Body>) -> String {
         .get("authorization")
         .and_then(|v| v.to_str().ok())
     {
-        if auth.starts_with("Bearer ") {
-            return format!("token:{}", &auth[7..]);
+        if let Some(token) = auth.strip_prefix("Bearer ") {
+            return format!("token:{}", token);
         }
     }
 
@@ -675,7 +671,7 @@ mod tests {
     fn tenant_override_applied_correctly() {
         let mut cfg = EndpointConfig::default();
         let tenant_id = "apikey:vip-tenant";
-        
+
         cfg.tenant_overrides.insert(
             tenant_id.to_string(),
             RateLimitConfig {
@@ -688,6 +684,9 @@ mod tests {
         assert_eq!(cfg.for_path("/api/v1/quote", None).max_requests, 20);
         
         // Override applied for the specific tenant
-        assert_eq!(cfg.for_path("/api/v1/quote", Some(tenant_id)).max_requests, 1000);
+        assert_eq!(
+            cfg.for_path("/api/v1/quote", Some(tenant_id)).max_requests,
+            1000
+        );
     }
 }
